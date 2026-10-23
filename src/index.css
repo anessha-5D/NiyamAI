@@ -1,0 +1,95 @@
+/* ============================================================
+   NiyamAI — Global Styles
+   Design tokens inspired by the NOVA SWEATS reference image:
+   • Deep wine/maroon hero: #6B1B3A / #8B2252
+   • Cream/off-white surfaces: #FAF7F2 / #F5F0E8
+   • Soft rose accent: #F4C5D0 / #ECBED0
+   • Sage green accent: #D4E5C0
+   • Lavender accent: #D4CEEA
+   • Text: #1A0A0F (dark) / #6B5A62 (muted)
+============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --wine: #7B1C3A;
+  --wine-dark: #5A1229;
+  --wine-light: #9E2D50;
+  --cream: #FAF7F2;
+  --cream-dark: #F0EBE3;
+  --rose: #F4C5D0;
+  --rose-dark: #E8A8BB;
+  --sage: #D4E5C0;
+  --sage-dark: #B8D4A0;
+  --lavender: #D4CEEA;
+  --lavender-dark: #BAB2D8;
+  --peach: #F5DDD0;
+  --text-primary: #1A0A0F;
+  --text-secondary: #6B5A62;
+  --text-muted: #9C8A93;
+  --text-on-wine: #FAF7F2;
+  --border: rgba(107, 90, 98, 0.15);
+  --border-strong: rgba(107, 90, 98, 0.25);
+  --shadow-sm: 0 2px 8px rgba(123, 28, 58, 0.08);
+  --shadow-md: 0 4px 20px rgba(123, 28, 58, 0.12);
+  --shadow-lg: 0 8px 40px rgba(123, 28, 58, 0.16);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--cream);
+}
+
+body {
+  background-color: var(--cream);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  line-height: 1.2;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: 2px;
+}
+
+textarea, input {
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cream-dark); }
+::-webkit-scrollbar-thumb { background: var(--rose-dark); border-radius: var(--radius-pill); }
