@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NiyamAI — Step 05: Publishing, Audit Trail & Governance Analytics</title>
+  
+  <!-- Tailwind CSS (Local with CDN fallback) -->
+  <script src="assets/vendor/tailwind.js"></script>
+  <script>
+    if (typeof tailwind === 'undefined') {
+      document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+    }
+  </script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            plum: {
+              950: '#1C060D',
+              900: '#330B18',
+              850: '#3F0E1E',
+              800: '#4E1227',
+              700: '#691D37',
+              600: '#8C264A',
+              100: '#F4E8EC',
+              50: '#FAF2F5'
+            },
+            blush: {
+              50: '#FAF7F5',
+              100: '#F5EEEA',
+              200: '#EADCD5'
+            },
+            pastel: {
+              lavender: '#ECE5F2',
+              sage: '#E3ECE2',
+              peach: '#FCE8DF',
+              slate: '#E0EBF5'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Syne"', 'sans-serif'],
+            editorial: ['"Playfair Display"', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="assets/css/styles.css">
+
+  <!-- Chart.js & Canvas Confetti (Local with CDN fallback) -->
+  <script src="assets/vendor/chart.js"></script>
+  <script src="assets/vendor/confetti.js"></script>
+</head>
+<body class="min-h-screen flex flex-col bg-[#FAF7F5] text-[#211218]">
+
+  <!-- TOP BANNER (Enterprise Governance Status) -->
+  <header class="bg-[#1C060D] text-[#E8DED8] text-xs py-2 px-4 border-b border-[#330B18]">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="bg-plum-800 text-white text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full">Enterprise Edition</span>
+        <span class="font-medium text-stone-300">Intelligent Brand Governance & AI Compliance Platform</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <button onclick="resetAllDemoData()" title="Reset to initial benchmark demonstration data" class="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-stone-800 text-stone-300 hover:text-white hover:bg-stone-700 transition border border-stone-700 flex items-center gap-1 cursor-pointer">
+          <svg class="w-3 h-3 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Reset Demo Data
+        </button>
+        <span class="hidden sm:inline text-stone-600">|</span>
+        <span class="text-emerald-400 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Pre-Publish Engine Active
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION BAR (Deep Wine Theme Matching UI Video) -->
+  <nav class="bg-[#330B18] text-white sticky top-0 z-40 shadow-lg border-b border-[#4E1227]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo & Brand Definition -->
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-extrabold text-2xl tracking-tight text-white">Niyam<span class="text-plum-100 font-light">AI</span></span>
+            <span class="text-[10px] uppercase font-bold tracking-widest bg-plum-800 text-plum-100 px-2 py-0.5 rounded-full border border-plum-700">Governance</span>
+          </div>
+          <p class="text-[11px] text-plum-100/70 tracking-wide">नि यम: Rule · Discipline · Order</p>
+        </div>
+
+        <!-- 5-STEP PIPELINE TRACKER (Interactive Teammate Integration Hub) -->
+        <div class="hidden lg:flex items-center gap-1 bg-[#250711] p-1.5 rounded-full border border-plum-800 text-xs">
+          <button onclick="openIntegrationBridge(1)" title="Click to inspect Step 01 (Member 1) Ingestion Bridge" class="px-3 py-1 text-stone-400 hover:text-white hover:bg-white/10 rounded-full transition flex items-center gap-1 cursor-pointer">
+            <span class="w-4 h-4 rounded-full bg-stone-800 text-[10px] flex items-center justify-center font-bold">1</span>
+            <span>Ingest</span>
+          </button>
+          <span class="text-stone-600">→</span>
+          <button onclick="openIntegrationBridge(2)" title="Click to inspect Step 02 (Member 2) AI Audit Bridge" class="px-3 py-1 text-stone-400 hover:text-white hover:bg-white/10 rounded-full transition flex items-center gap-1 cursor-pointer">
+            <span class="w-4 h-4 rounded-full bg-stone-800 text-[10px] flex items-center justify-center font-bold">2</span>
+            <span>Audit</span>
+          </button>
+          <span class="text-stone-600">→</span>
+          <button onclick="openIntegrationBridge(3)" title="Click to inspect Step 03 (Member 3) Correction Bridge" class="px-3 py-1 text-stone-400 hover:text-white hover:bg-white/10 rounded-full transition flex items-center gap-1 cursor-pointer">
+            <span class="w-4 h-4 rounded-full bg-stone-800 text-[10px] flex items-center justify-center font-bold">3</span>
+            <span>Flag</span>
+          </button>
+          <span class="text-stone-600">→</span>
+          <button onclick="openIntegrationBridge(4)" title="Click to inspect Step 04 (Member 4) Human Review Bridge" class="px-3 py-1 text-stone-400 hover:text-white hover:bg-white/10 rounded-full transition flex items-center gap-1 cursor-pointer">
+            <span class="w-4 h-4 rounded-full bg-stone-800 text-[10px] flex items-center justify-center font-bold">4</span>
+            <span>Review</span>
+          </button>
+          <span class="text-stone-600">→</span>
+          <!-- Step 5 Active Pill -->
+          <button onclick="switchTab('release-gate')" title="Step 05 Release Gatekeeper Active" class="px-3 py-1 bg-white text-plum-950 font-bold rounded-full shadow-xs flex items-center gap-1.5 cursor-pointer">
+            <span class="w-4 h-4 rounded-full bg-plum-900 text-white text-[10px] flex items-center justify-center">5</span>
+            <span>Publish & Analytics</span>
+          </button>
+        </div>
+
+        <!-- Action & Governance Profile -->
+        <div class="flex items-center gap-3">
+          <button onclick="downloadAuditManifest()" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-full bg-[#4E1227] text-white border border-plum-700 hover:bg-plum-700 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export Manifest
+          </button>
+          
+          <div class="flex items-center gap-2 pl-2 border-l border-plum-800">
+            <div class="w-9 h-9 rounded-full bg-[#5A192E] border border-plum-600 flex items-center justify-center text-xs font-bold text-white shadow-inner">
+              <svg class="w-4 h-4 text-plum-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <div class="hidden md:block text-left text-xs">
+              <span class="block font-semibold text-white leading-tight">Brand Officer</span>
+              <span class="block text-[10px] text-stone-400">Governance Lead</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION (Editorial Burgundy Aesthetic Matching Reference Video) -->
+  <section class="bg-[#330B18] text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 border-b border-[#4E1227] relative overflow-hidden">
+    <!-- Subtle background glow -->
+    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-plum-700/20 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-plum-600/15 blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+        
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-plum-800/80 border border-plum-700 text-plum-100 text-xs font-medium mb-4">
+            <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+            Step 05 Governance Engine · Pre-Publish Gatekeeper
+          </div>
+          <h1 class="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl tracking-tight text-white leading-[1.15]">
+            Govern every claim. <br class="hidden sm:inline">
+            <span class="font-editorial italic font-normal text-plum-100">Publish with confidence.</span>
+          </h1>
+          <p class="mt-4 text-sm sm:text-base text-stone-300 font-light leading-relaxed">
+            NiyamAI’s release management layer enforces multi-vector brand thresholds, seals tamper-evident audit trails, and turns compliance violations into continuous governance intelligence.
+          </p>
+
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button onclick="switchTab('release-gate')" class="btn-pill-wine !bg-white !text-plum-950 hover:!bg-plum-50 !shadow-lg">
+              Open Publishing Gate
+            </button>
+            <button onclick="switchTab('governance-analytics')" class="btn-pill-outline !border-plum-600 !text-stone-200 hover:!bg-plum-800 hover:!text-white">
+              View Governance Analytics →
+            </button>
+          </div>
+        </div>
+
+        <!-- Reference Prototype & Realism Transparency Card -->
+        <div class="w-full lg:w-96 bg-[#270813]/90 rounded-3xl p-5 border border-plum-800 shadow-xl backdrop-blur-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-plum-800/80">
+            <span class="text-xs font-bold text-plum-100 uppercase tracking-widest flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Governance Trust Layer
+            </span>
+            <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800">Tamper-Evident</span>
+          </div>
+          <div class="mt-4 space-y-3 text-xs">
+            <div class="flex justify-between items-center text-stone-300">
+              <span>Minimum Tone Threshold:</span>
+              <strong class="text-white font-mono">≥ 90%</strong>
+            </div>
+            <div class="flex justify-between items-center text-stone-300">
+              <span>Claims Verification Gate:</span>
+              <strong class="text-white font-mono">≥ 95% (Mandatory)</strong>
+            </div>
+            <div class="flex justify-between items-center text-stone-300">
+              <span>Accessibility (WCAG 2.1 AA):</span>
+              <strong class="text-white font-mono">≥ 90%</strong>
+            </div>
+            <div class="flex justify-between items-center text-stone-300">
+              <span>Human Approval Requirement:</span>
+              <strong class="text-white font-mono">Tier-2 Certified</strong>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-plum-800/80 flex items-center justify-between text-[11px] text-stone-400">
+            <span>Cryptographic Provenance</span>
+            <span class="text-xs font-mono text-plum-100">SHA-256 Ledger</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- EXECUTIVE KPI STATS (Matching Pastel Boxes in the Reference Video) -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Brand Health Score (Pastel Lavender) -->
+      <div class="luxury-card bg-[#ECE5F2] rounded-3xl p-6 border border-[#DCD0E6] shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-stone-600 uppercase tracking-widest">Brand Governance Score</span>
+            <span id="kpiHealthDelta" class="text-xs font-bold text-emerald-700 bg-white/70 px-2 py-0.5 rounded-full">+2.8%</span>
+          </div>
+          <h3 id="kpiHealthScore" class="font-display font-extrabold text-3xl sm:text-4xl text-[#330B18] mt-2">95.4%</h3>
+        </div>
+        <p class="text-xs text-stone-600 mt-3 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          Across all published media channels
+        </p>
+      </div>
+
+      <!-- Card 2: Gate Pass Rate (Pastel Sage Green) -->
+      <div class="luxury-card bg-[#E3ECE2] rounded-3xl p-6 border border-[#CFE0CD] shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-stone-600 uppercase tracking-widest">Gate Pass Rate</span>
+            <span class="text-xs font-bold text-emerald-800 bg-white/70 px-2 py-0.5 rounded-full">First-Pass</span>
+          </div>
+          <h3 id="kpiPassRate" class="font-display font-extrabold text-3xl sm:text-4xl text-[#1E3A2B] mt-2">96.2%</h3>
+        </div>
+        <p class="text-xs text-stone-600 mt-3 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Assets clearing all quality thresholds
+        </p>
+      </div>
+
+      <!-- Card 3: Violations Prevented (Pastel Peach) -->
+      <div class="luxury-card bg-[#FCE8DF] rounded-3xl p-6 border border-[#F7D5C4] shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-stone-600 uppercase tracking-widest">Risks Neutralized</span>
+            <span class="text-xs font-bold text-rose-800 bg-white/70 px-2 py-0.5 rounded-full">Pre-Publish</span>
+          </div>
+          <h3 id="kpiViolationsPrevented" class="font-display font-extrabold text-3xl sm:text-4xl text-[#5A2818] mt-2">64</h3>
+        </div>
+        <p class="text-xs text-stone-600 mt-3 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Legal & tone drift stopped before release
+        </p>
+      </div>
+
+      <!-- Card 4: Release Velocity (Pastel Slate Blue) -->
+      <div class="luxury-card bg-[#E0EBF5] rounded-3xl p-6 border border-[#CADCEE] shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-stone-600 uppercase tracking-widest">Release Velocity</span>
+            <span class="text-xs font-bold text-sky-800 bg-white/70 px-2 py-0.5 rounded-full">15x Faster</span>
+          </div>
+          <h3 id="kpiVelocity" class="font-display font-extrabold text-3xl sm:text-4xl text-[#18344E] mt-2">3.2 hrs</h3>
+        </div>
+        <p class="text-xs text-stone-600 mt-3 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Reduced from 48h manual bottlenecks
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- WORKSPACE TABS & CONTROLS -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+    
+    <!-- Tab Navigation -->
+    <div class="flex flex-wrap items-center justify-between border-b border-[#E8DED8] pb-4 gap-4">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-6">
+        <button data-tab="release-gate" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-plum-850 text-plum-900 font-bold transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-plum-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          Release Gate & Dispatch
+        </button>
+        <button data-tab="audit-explorer" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-transparent text-stone-500 font-medium hover:text-plum-900 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Tamper-Evident Audit Trail
+        </button>
+        <button data-tab="governance-analytics" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-transparent text-stone-500 font-medium hover:text-plum-900 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Governance Analytics & Drift
+        </button>
+        <button data-tab="feedback-loop" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-transparent text-stone-500 font-medium hover:text-plum-900 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Rule Feedback Loop
+        </button>
+      </div>
+
+      <!-- Transparent Simulator Tag -->
+      <div class="flex items-center gap-2 text-xs text-stone-500 bg-white px-3 py-1.5 rounded-full border border-stone-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Simulated Enterprise Data · Demo Ready</span>
+      </div>
+    </div>
+
+    <!-- TAB 1: RELEASE GATE (PRE-PUBLISH QUEUE) -->
+    <section id="panel-release-gate" class="tab-content-panel mt-8">
+      
+      <!-- Filters and search bar -->
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+        
+        <!-- Status Filter Pills -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button data-filter="all" class="filter-btn px-4 py-1.5 text-xs font-semibold rounded-full bg-plum-900 text-white shadow-sm transition">
+            All Assets
+          </button>
+          <button data-filter="ready" class="filter-btn px-4 py-1.5 text-xs font-semibold rounded-full bg-white text-stone-700 hover:bg-stone-100 transition border border-stone-200">
+            Ready to Publish
+          </button>
+          <button data-filter="blocked" class="filter-btn px-4 py-1.5 text-xs font-semibold rounded-full bg-white text-stone-700 hover:bg-stone-100 transition border border-stone-200">
+            Blocked: Below Threshold
+          </button>
+          <button data-filter="published" class="filter-btn px-4 py-1.5 text-xs font-semibold rounded-full bg-white text-stone-700 hover:bg-stone-100 transition border border-stone-200">
+            Published & Audited
+          </button>
+        </div>
+
+        <!-- Search & Category Dropdown -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1 sm:w-64">
+            <input type="text" id="assetSearchInput" placeholder="Search campaign, ID, author..." class="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-white border border-stone-200 focus:outline-none focus:border-plum-800 transition">
+            <svg class="w-4 h-4 text-stone-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <select id="assetCategorySelect" class="py-2 px-3 text-xs rounded-full bg-white border border-stone-200 text-stone-700 focus:outline-none focus:border-plum-800 transition">
+            <option value="all">All Formats</option>
+            <option value="Press Release">Press Releases</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Whitepaper">Whitepapers</option>
+            <option value="Email Marketing">Email Marketing</option>
+            <option value="Corporate Report">Corporate Reports</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Asset Cards Grid -->
+      <div id="assetListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+
+    </section>
+
+    <!-- TAB 2: TAMPER-EVIDENT AUDIT TRAIL EXPLORER -->
+    <section id="panel-audit-explorer" class="tab-content-panel mt-8 hidden">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DED8] shadow-sm">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-stone-200">
+          <div>
+            <h3 class="font-display font-bold text-xl text-stone-900">Tamper-Evident Audit Provenance</h3>
+            <p class="text-xs text-stone-500 mt-1">Every AI check, human sign-off, and rule citation permanently recorded.</p>
+          </div>
+          <button onclick="downloadAuditManifest()" class="btn-pill-wine !py-2 !px-5 !text-xs flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export Comprehensive JSON Manifest
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-stone-200 text-stone-500 text-[11px] uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Asset ID & Title</th>
+                <th class="py-3 px-4">Category</th>
+                <th class="py-3 px-4 text-center">Governance Score</th>
+                <th class="py-3 px-4">Sign-offs</th>
+                <th class="py-3 px-4">Cryptographic Hash</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100 text-xs">
+              <!-- Row AST-1082 -->
+              <tr class="hover:bg-stone-50/80 transition">
+                <td class="py-4 px-4">
+                  <span class="font-mono font-bold text-plum-900">AST-1082</span>
+                  <div class="font-medium text-stone-900 mt-0.5">Q4 Global AI Flagship Launch — Press Release</div>
+                </td>
+                <td class="py-4 px-4 text-stone-600">Press Release</td>
+                <td class="py-4 px-4 text-center font-bold text-emerald-800">98%</td>
+                <td class="py-4 px-4 text-stone-600">3 of 3 Verified</td>
+                <td class="py-4 px-4 font-mono text-[10px] text-stone-500">0x8f2d5a3c...bb9e410</td>
+                <td class="py-4 px-4 text-right">
+                  <button onclick="openAuditDrawer('AST-1082')" class="text-plum-900 font-bold hover:underline">View Timeline →</button>
+                </td>
+              </tr>
+              <!-- Row AST-1084 -->
+              <tr class="hover:bg-stone-50/80 transition">
+                <td class="py-4 px-4">
+                  <span class="font-mono font-bold text-plum-900">AST-1084</span>
+                  <div class="font-medium text-stone-900 mt-0.5">Enterprise AI Compliance Whitepaper</div>
+                </td>
+                <td class="py-4 px-4 text-stone-600">Whitepaper</td>
+                <td class="py-4 px-4 text-center font-bold text-emerald-800">96%</td>
+                <td class="py-4 px-4 text-stone-600">2 of 2 Verified</td>
+                <td class="py-4 px-4 font-mono text-[10px] text-stone-500">0x4a9e887f...1265fa1</td>
+                <td class="py-4 px-4 text-right">
+                  <button onclick="openAuditDrawer('AST-1084')" class="text-plum-900 font-bold hover:underline">View Timeline →</button>
+                </td>
+              </tr>
+              <!-- Row AST-1085 -->
+              <tr class="hover:bg-stone-50/80 transition">
+                <td class="py-4 px-4">
+                  <span class="font-mono font-bold text-plum-900">AST-1085</span>
+                  <div class="font-medium text-stone-900 mt-0.5">Global Partner Summit 2026 Invitation</div>
+                </td>
+                <td class="py-4 px-4 text-stone-600">Email Marketing</td>
+                <td class="py-4 px-4 text-center font-bold text-emerald-800">97%</td>
+                <td class="py-4 px-4 text-stone-600">3 of 3 Verified</td>
+                <td class="py-4 px-4 font-mono text-[10px] text-stone-500">0x3e18a90d...ba876301</td>
+                <td class="py-4 px-4 text-right">
+                  <button onclick="openAuditDrawer('AST-1085')" class="text-plum-900 font-bold hover:underline">View Timeline →</button>
+                </td>
+              </tr>
+              <!-- Row AST-1086 -->
+              <tr class="hover:bg-stone-50/80 transition">
+                <td class="py-4 px-4">
+                  <span class="font-mono font-bold text-plum-900">AST-1086</span>
+                  <div class="font-medium text-stone-900 mt-0.5">Quarterly Compliance & ESG Impact Brief</div>
+                </td>
+                <td class="py-4 px-4 text-stone-600">Corporate Report</td>
+                <td class="py-4 px-4 text-center font-bold text-emerald-800">95%</td>
+                <td class="py-4 px-4 text-stone-600">3 of 3 Verified</td>
+                <td class="py-4 px-4 font-mono text-[10px] text-stone-500">0x12c45e99...ef239910</td>
+                <td class="py-4 px-4 text-right">
+                  <button onclick="openAuditDrawer('AST-1086')" class="text-plum-900 font-bold hover:underline">View Timeline →</button>
+                </td>
+              </tr>
+              <!-- Row AST-1083 -->
+              <tr class="hover:bg-rose-50/40 transition">
+                <td class="py-4 px-4">
+                  <span class="font-mono font-bold text-rose-800">AST-1083</span>
+                  <div class="font-medium text-stone-900 mt-0.5">Eco-Conscious Packaging Social Campaign</div>
+                </td>
+                <td class="py-4 px-4 text-stone-600">Social Media</td>
+                <td class="py-4 px-4 text-center font-bold text-rose-700">79%</td>
+                <td class="py-4 px-4 text-rose-800">1 of 2 (Missing Legal)</td>
+                <td class="py-4 px-4 font-mono text-[10px] text-rose-600">GATE_BLOCKED_VIOLATION</td>
+                <td class="py-4 px-4 text-right">
+                  <button onclick="openAuditDrawer('AST-1083')" class="text-rose-700 font-bold hover:underline">Inspect Block →</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: GOVERNANCE ANALYTICS & DRIFT -->
+    <section id="panel-governance-analytics" class="tab-content-panel mt-8 hidden space-y-8">
+      
+      <!-- Top Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Chart 1: Governance Health & Velocity Trend -->
+        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DED8] shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-display font-bold text-lg text-stone-900">Governance Drift & Velocity Trend</h3>
+              <p class="text-xs text-stone-500">Compliance score improvement vs. review turnaround reduction</p>
+            </div>
+            <span class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">6-Month Trend</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="driftTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Violation Breakdown by Category -->
+        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DED8] shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-display font-bold text-lg text-stone-900">Flagged Risk Distribution</h3>
+              <p class="text-xs text-stone-500">Breakdown of AI governance triggers across all campaigns</p>
+            </div>
+            <span class="text-xs font-semibold text-plum-900 bg-plum-50 px-2.5 py-1 rounded-full border border-plum-200">Total 64 Prevented</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="violationDoughnutChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Second Charts Row: Channel Health -->
+      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DED8] shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-display font-bold text-lg text-stone-900">Compliance Pass Rate by Channel</h3>
+            <p class="text-xs text-stone-500">Assessing publishing channels vulnerable to brand drift</p>
+          </div>
+          <span class="text-xs text-stone-500">Benchmark: 90% Threshold</span>
+        </div>
+        <div class="h-56 relative">
+          <canvas id="channelHealthChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Friction Rules Table -->
+      <div class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8DED8] shadow-sm">
+        <div class="mb-4">
+          <h3 class="font-display font-bold text-lg text-stone-900">Top Guideline Friction Points</h3>
+          <p class="text-xs text-stone-500">Rules that most frequently trigger warnings and need clarification in the brand handbook</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-stone-200 text-stone-500 text-[11px] uppercase tracking-wider font-semibold">
+                <th class="py-3 px-4">Brand Guideline Rule</th>
+                <th class="py-3 px-4">Category</th>
+                <th class="py-3 px-4 text-center">Fired</th>
+                <th class="py-3 px-4 text-center">Fix Rate</th>
+                <th class="py-3 px-4">AI Recommended Brand Book Refinement</th>
+              </tr>
+            </thead>
+            <tbody id="frictionRulesTableBody" class="divide-y divide-stone-100 text-xs">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 4: RULE FEEDBACK LOOP (CONTINUOUS GOVERNANCE) -->
+    <section id="panel-feedback-loop" class="tab-content-panel mt-8 hidden space-y-6">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-[#E8DED8] shadow-sm">
+        <div class="max-w-3xl">
+          <span class="badge-pill bg-purple-50 text-purple-900 border border-purple-200 mb-3">Governance Feedback Loop</span>
+          <h3 class="font-display font-bold text-2xl text-stone-900">Learning From Repeated Human Overrides</h3>
+          <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+            In NiyamAI, governance isn't a dead-end bottleneck. When human reviewers repeatedly approve or override content flagged by AI, the system automatically detects ambiguous brand guidelines and suggests organic policy updates.
+          </p>
+        </div>
+
+        <div id="ambiguousRulesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <!-- Submitted Proposals for Brand Policy Committee -->
+        <div class="mt-10 pt-6 border-t border-stone-200">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="font-display font-bold text-base text-stone-900">Submitted Guideline Revision Proposals</h4>
+              <p class="text-xs text-stone-500">Proposals queued for authorized human review by the Brand Policy Committee.</p>
+            </div>
+            <span class="text-xs text-stone-500 font-medium bg-stone-100 px-3 py-1 rounded-full border border-stone-200">Demonstration Workflow</span>
+          </div>
+          <div id="submittedProposalsContainer" class="space-y-3">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SLIDE-OVER AUDIT TIMELINE DRAWER -->
+  <div id="auditTimelineDrawer" class="fixed inset-0 z-50 overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 overflow-hidden">
+      <!-- Backdrop -->
+      <div id="drawerBackdrop" onclick="closeAuditDrawer()" class="absolute inset-0 bg-stone-900/60 backdrop-blur-xs transition-opacity opacity-0 cursor-pointer"></div>
+
+      <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+        <div id="drawerPanel" class="pointer-events-auto w-screen max-w-xl transform transition-transform duration-300 ease-out translate-x-full bg-[#FAF7F5] shadow-2xl flex flex-col justify-between">
+          
+          <!-- Drawer Header -->
+          <div class="p-6 bg-[#330B18] text-white border-b border-[#4E1227]">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span id="drawerAssetId" class="text-xs font-mono font-bold bg-white/20 text-white px-2.5 py-1 rounded-full">AST-XXXX</span>
+                <span id="drawerAssetCategory" class="text-xs uppercase tracking-widest text-plum-100 font-semibold">Format</span>
+              </div>
+              <button onclick="closeAuditDrawer()" class="p-1 rounded-full text-stone-300 hover:text-white hover:bg-white/10 transition cursor-pointer">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <h3 id="drawerAssetTitle" class="font-display font-bold text-xl text-white mt-3">Asset Title</h3>
+            <div class="flex items-center justify-between text-xs text-plum-100/80 mt-2">
+              <span>Author: <strong id="drawerAssetAuthor" class="text-white">Author Name</strong></span>
+              <span>Score: <strong id="drawerAssetScore" class="text-white">98%</strong></span>
+            </div>
+          </div>
+
+          <!-- Drawer Body (Chronological Timeline) -->
+          <div class="flex-1 overflow-y-auto p-6 sm:p-8">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-6 flex items-center gap-2">
+              <svg class="w-4 h-4 text-plum-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Cryptographic Audit Provenance
+            </h4>
+            <div id="drawerTimelineContent">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+
+            <!-- Cryptographic Verification Control -->
+            <div class="mt-6 mb-4">
+              <button onclick="verifyActiveAuditChain()" class="w-full py-2.5 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer">
+                <svg class="w-4 h-4 text-plum-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Verify Hash Chain Integrity (Web Crypto SHA-256)
+              </button>
+              <div id="drawerVerifyResult" class="mt-2"></div>
+            </div>
+
+            <!-- Hash representation -->
+            <div class="p-4 rounded-2xl bg-white border border-stone-200 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="block text-[10px] uppercase font-bold text-stone-500">Cryptographic Block Hash (SHA-256)</span>
+                <span class="text-[9px] font-mono text-stone-400">Web Crypto API</span>
+              </div>
+              <span id="drawerHash" class="font-mono text-[11px] text-plum-900 break-all select-all mt-1 block">0x...</span>
+              <p class="text-[10px] text-stone-400 mt-2 italic">Client-side hash chain verifies data integrity against alteration. In production, committed to immutable audit ledger.</p>
+            </div>
+          </div>
+
+          <!-- Drawer Footer -->
+          <div class="p-4 bg-white border-t border-stone-200 flex items-center justify-between gap-3">
+            <button onclick="downloadAuditManifest()" class="px-4 py-2 text-xs font-semibold text-stone-700 border border-stone-300 rounded-full hover:bg-stone-50 transition cursor-pointer">
+              Download JSON Manifest
+            </button>
+            <button onclick="closeAuditDrawer()" class="btn-pill-wine !py-2 !px-6 !text-xs cursor-pointer">
+              Close Audit
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLISH CONFIRMATION GATE MODAL -->
+  <div id="publishGateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-stone-200">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+          <h3 class="font-display font-bold text-lg text-stone-900">Pre-Publish Threshold Passed</h3>
+        </div>
+        <button onclick="closePublishModal()" class="text-stone-400 hover:text-stone-700 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="my-5">
+        <span id="modalAssetId" class="text-xs font-mono font-bold text-plum-900 bg-plum-50 px-2 py-0.5 rounded-full">AST-XXXX</span>
+        <h4 id="modalAssetTitle" class="font-display font-bold text-base text-stone-900 mt-2">Asset Title</h4>
+        <div class="flex items-center gap-4 text-xs text-stone-600 mt-2">
+          <span>Format: <strong id="modalAssetCategory">Press Release</strong></span>
+          <span>Compliance Score: <strong id="modalAssetScore" class="text-emerald-700">98%</strong></span>
+        </div>
+
+        <!-- Gate Thresholds Checklist -->
+        <div class="mt-4 mb-4">
+          <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">Pre-Publish Gate Criteria:</label>
+          <div id="modalGateChecklist"></div>
+        </div>
+
+        <!-- Target Channels Selection -->
+        <div class="mt-4">
+          <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">Verified Publishing Destinations:</label>
+          <div id="modalChannelTargets" class="space-y-2">
+            <!-- Channel pills rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Compliance guarantee notice -->
+        <div class="mt-5 p-3 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-600 flex items-start gap-2">
+          <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>Authorizing release generates an immutable SHA-256 audit token and dispatches content across selected channels.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+        <button onclick="closePublishModal()" class="px-5 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 cursor-pointer">
+          Cancel
+        </button>
+        <button id="btnConfirmRelease" onclick="executeRelease()" class="btn-pill-wine !py-2.5 !px-6 !text-xs cursor-pointer">
+          Authorize & Release to Channels
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GATEKEEPER BLOCKED MODAL -->
+  <div id="blockedModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200">
+      <div class="flex items-center justify-between pb-4 border-b border-rose-200">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-stone-900">Release Gatekeeper Blocked</h3>
+            <span class="text-xs text-rose-700 font-medium">Compliance Threshold Violation</span>
+          </div>
+        </div>
+        <button onclick="closeBlockedModal()" class="text-stone-400 hover:text-stone-700 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="my-5">
+        <span id="blockedAssetId" class="text-xs font-mono font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full">AST-XXXX</span>
+        <h4 id="blockedAssetTitle" class="font-display font-bold text-base text-stone-900 mt-2">Asset Title</h4>
+        <p class="text-xs text-stone-500 mt-1">Current Score: <strong id="blockedAssetScore" class="text-rose-700">79%</strong> (Required: ≥ 90%)</p>
+
+        <div class="mt-4">
+          <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">Blocking Issues Preventing Release:</label>
+          <ul id="blockedReasonsList" class="space-y-2">
+            <!-- Reasons populated dynamically -->
+          </ul>
+        </div>
+
+        <div class="mt-5 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+          <svg class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Asset must be routed back to Step 03 (Flag & Correct) or Step 04 (Review & Sign-off) to resolve violations before release.</span>
+        </div>
+      </div>
+
+      <div id="blockedModalActions" class="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-stone-200">
+        <!-- Dynamic simulation buttons injected by app.js -->
+        <button onclick="closeBlockedModal()" class="btn-pill-outline !py-2 !px-5 !text-xs cursor-pointer">
+          Acknowledge & Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINTABLE COMPLIANCE CERTIFICATE MODAL -->
+  <div id="certificateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden">
+    <div id="certificateContainer" class="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl border-4 border-plum-900 relative">
+      <!-- Populated dynamically by viewCertificate in app.js -->
+    </div>
+  </div>
+
+  <!-- PROPOSE RULE CLARIFICATION MODAL (Feedback Loop) -->
+  <div id="proposeRuleModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200">
+      <div class="flex items-center justify-between pb-4 border-b border-stone-200">
+        <div>
+          <span id="propRuleId" class="text-xs font-mono font-bold text-plum-900 bg-plum-50 px-2 py-0.5 rounded-full">RULE-ID</span>
+          <h3 class="font-display font-bold text-lg text-stone-900 mt-1">Propose Brand Guideline Refinement</h3>
+        </div>
+        <button onclick="closeProposeRuleModal()" class="text-stone-400 hover:text-stone-700 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="my-5 space-y-4 text-xs">
+        <div>
+          <span class="block text-stone-500 font-semibold mb-1">Target Rule:</span>
+          <p id="propRuleName" class="font-bold text-stone-900 bg-stone-50 p-2.5 rounded-xl border border-stone-200">Rule Name</p>
+        </div>
+
+        <div>
+          <label class="block text-stone-700 font-semibold mb-1">Proposed Rule Wording Refinement:</label>
+          <textarea id="propRuleSuggestion" rows="3" class="w-full p-3 rounded-2xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:border-plum-800 transition text-xs text-stone-900" placeholder="Enter clear, actionable guideline wording..."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-stone-700 font-semibold mb-1">Reviewer Justification / Context:</label>
+          <input type="text" id="propRuleRationale" class="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:border-plum-800 transition text-xs text-stone-900" placeholder="e.g. Repeated false positive flags when writing for technical developer audiences.">
+        </div>
+
+        <p class="text-[11px] text-stone-500 italic">Submitting records this recommendation for authorized Brand Policy Committee review.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+        <button onclick="closeProposeRuleModal()" class="px-5 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="submitRuleProposal()" class="btn-pill-wine !py-2 !px-5 !text-xs cursor-pointer">
+          Submit Proposal for Review
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAMMATE INTEGRATION BRIDGE MODAL (Steps 1 to 4) -->
+  <div id="integrationBridgeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200">
+      <div class="flex items-center justify-between pb-4 border-b border-stone-200">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-plum-100 text-plum-900 flex items-center justify-center font-bold text-xs">API</div>
+          <div>
+            <h3 id="bridgeModalTitle" class="font-display font-bold text-lg text-stone-900">Teammate Integration Bridge</h3>
+            <span class="text-[11px] text-plum-800 font-medium">Modular Pipeline Connector</span>
+          </div>
+        </div>
+        <button onclick="closeIntegrationModal()" class="text-stone-400 hover:text-stone-700 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="my-5 space-y-4 text-xs">
+        <p id="bridgeModalDesc" class="text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-2xl border border-stone-200">
+          Module details and expectations from teammates.
+        </p>
+
+        <div>
+          <label class="block text-stone-700 font-bold uppercase tracking-wider text-[10px] mb-1.5">Expected Data Contract (JSON Payload for Step 05):</label>
+          <pre id="bridgeModalSchema" class="bg-stone-900 text-emerald-400 p-4 rounded-2xl font-mono text-[11px] overflow-x-auto max-h-48"></pre>
+        </div>
+
+        <div class="p-3 bg-purple-50 rounded-2xl border border-purple-200 text-purple-900 text-[11px]">
+          <strong>Hackathon Judge Showcase:</strong> You can click the button below to inject a simulated live payload from this teammate directly into Step 05's active queue!
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+        <button onclick="closeIntegrationModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 cursor-pointer">
+          Close
+        </button>
+        <button id="btnInjectPayload" class="btn-pill-wine !py-2 !px-5 !text-xs cursor-pointer flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Inject Sample Payload
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER (Deep Wine Palette Matching Video Footer) -->
+  <footer class="bg-[#330B18] text-white pt-14 pb-8 border-t border-[#4E1227] mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-[#4E1227]">
+        
+        <!-- Brand Info -->
+        <div class="space-y-3">
+          <div>
+            <span class="font-display font-extrabold text-xl tracking-tight text-white">Niyam<span class="text-plum-100 font-light">AI</span></span>
+          </div>
+          <p class="text-xs text-stone-300 leading-relaxed font-light">
+            Intelligent brand governance and pre-publish AI compliance platform for enterprise content operations.
+          </p>
+        </div>
+
+        <!-- 5-Step Architecture -->
+        <div>
+          <h4 class="font-display font-bold text-sm text-white mb-3 tracking-wider uppercase">Pipeline Modules</h4>
+          <ul class="space-y-2 text-xs text-stone-300">
+            <li><button onclick="openIntegrationBridge(1)" class="hover:text-white transition text-stone-400">Step 01: Ingestion & Guidelines</button></li>
+            <li><button onclick="openIntegrationBridge(2)" class="hover:text-white transition text-stone-400">Step 02: AI Multimodal Audit</button></li>
+            <li><button onclick="openIntegrationBridge(3)" class="hover:text-white transition text-stone-400">Step 03: Flagging & Intent Fixes</button></li>
+            <li><button onclick="openIntegrationBridge(4)" class="hover:text-white transition text-stone-400">Step 04: Tiered Human Review</button></li>
+            <li><span class="text-white font-bold">Step 05:</span> <span class="text-plum-100">Publish & Governance Loop</span></li>
+          </ul>
+        </div>
+
+        <!-- Compliance & Security -->
+        <div>
+          <h4 class="font-display font-bold text-sm text-white mb-3 tracking-wider uppercase">Governance Trust</h4>
+          <ul class="space-y-2 text-xs text-stone-300">
+            <li>WCAG 2.1 AA Accessibility</li>
+            <li>FTC Green Guides & Claim Verification</li>
+            <li>Tenant-Specific RAG Factbases</li>
+            <li>SHA-256 Tamper-Proof Audit Hashes</li>
+            <li>Continuous Brand Book Feedback</li>
+          </ul>
+        </div>
+
+        <!-- Platform Navigation -->
+        <div>
+          <h4 class="font-display font-bold text-sm text-white mb-3 tracking-wider uppercase">Platform Navigation</h4>
+          <div class="text-xs text-stone-300 space-y-2">
+            <p><button onclick="switchTab('release-gate')" class="text-stone-400 hover:text-white transition">Step 05 Release Gate & Provenance</button></p>
+            <p><button onclick="switchTab('audit-explorer')" class="text-stone-400 hover:text-white transition">Enterprise Audit Log Explorer</button></p>
+            <p><button onclick="switchTab('governance-analytics')" class="text-stone-400 hover:text-white transition">Governance Drift Analytics</button></p>
+            <div class="pt-2 flex items-center gap-2">
+              <button onclick="resetAllDemoData()" class="btn-pill-outline !border-plum-700 !text-plum-100 !py-1 !px-3 !text-[11px] cursor-pointer">
+                Reset Demo
+              </button>
+              <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="btn-pill-outline !border-plum-700 !text-plum-100 !py-1 !px-3 !text-[11px] cursor-pointer">
+                ↑ Back to Top
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
+        <p>© 2026 NiyamAI. All rights reserved.</p>
+        <p class="text-[11px] text-stone-500">Enterprise AI Brand Governance & Pre-Publish Compliance</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Scripts -->
+  <script src="assets/js/mockData.js"></script>
+  <script src="assets/js/integrationAdapters.js"></script>
+  <script src="assets/js/analyticsCharts.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
