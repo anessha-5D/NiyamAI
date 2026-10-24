@@ -14,9 +14,15 @@ NiyamAI provides a centralized correction workspace that presents correction rec
 
 The project can be extended with role-based access, approval actions, notifications, and persistent backend storage to support a complete correction management workflow.
 
+
+
 ## ✨ Key Features
 
 - **Correction Dashboard:** View correction records in an organized interface.
+
+![NiyamAI Dashboard](Screenshots/dashboard.png.png)
+
+
 - **Record Listing:** Browse available correction records.
 - **Correction Details:** Open individual records to examine their information.
 - **Correction History:** View correction history through a dedicated interface.
@@ -25,7 +31,9 @@ The project can be extended with role-based access, approval actions, notificati
 - **Reusable Components:** Separate UI components for record lists, correction details, history, and notifications.
 - **Utility Functions:** Shared helpers for formatting and local data handling.
 
-*Note: The current feature set reflects the frontend structure. Features requiring a backend, authentication, or a database depend on further implementation.*
+
+![NiyamAI Visual Audit](Screenshots/visualsaudit.png.png)
+
 
 ## 🛠️ Technology Stack
 
@@ -37,6 +45,8 @@ The project can be extended with role-based access, approval actions, notificati
 | CSS | Styling and layout |
 | JavaScript / TypeScript modules | Application logic and utilities |
 | Git and GitHub | Version control and collaboration |
+
+![NiyamAI Text Audit](Screenshots/textaudit.png.png)
 
 ## 📂 Project Structure
 
@@ -69,6 +79,7 @@ NiyamAI/
 ├── tsconfig.json
 └── vite.config.ts
 ```
+
 
 ## ⚙️ Getting Started
 
@@ -134,6 +145,7 @@ The application follows a component-based frontend structure:
 - **CSS files** manage application-wide and component styling.
 
 This structure makes the codebase easier to maintain and provides a foundation for integrating additional services.
+![NiyamAI Analytics](Screenshots/analytics.png.png)
 
 ## 🚀 Future Scope
 
@@ -176,3 +188,6 @@ Developed collaboratively by the NiyamAI project team.
 ---
 
 **NiyamAI — Making correction workflows more organized, traceable, and transparent.**
+
+
+![NiyamAI Brand Kit](Screenshots/brandkit.png.png)
