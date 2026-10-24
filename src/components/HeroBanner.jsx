@@ -12,7 +12,7 @@ export default function HeroBanner({ onSelectSection }) {
       <div className="relative border-b border-wine-800/80 px-6 sm:px-10 py-3.5 flex flex-wrap items-center justify-between text-xs tracking-wide text-wine-200">
         <div className="flex items-center space-x-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="font-medium">NiyamAI • Member 1 — Brand Knowledge & Guidelines</span>
+          <span className="font-medium">NiyamAI • Brand Knowledge & Guidelines</span>
         </div>
         <div className="hidden sm:flex items-center space-x-6 text-[11px] font-medium tracking-wider uppercase text-wine-300">
           <span>Demo Subject: NovaTech Workflow Software</span>

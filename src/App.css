@@ -69,7 +69,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  cursor: default;
+  cursor: pointer;
+  border: none;
+}
+
+.nav-link:hover {
+  background: rgba(244, 197, 208, 0.12);
+  color: #FAF7F2;
 }
 
 .nav-link.active {

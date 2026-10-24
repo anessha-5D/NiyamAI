@@ -21,7 +21,7 @@ export function RecordList({ records, selectedId, onSelect }: Props) {
       <div className="empty-state">
         <div className="empty-state-icon">📋</div>
         <div className="empty-state-title">No correction records</div>
-        <div className="empty-state-text">Correction records from Member 2's audit will appear here.</div>
+        <div className="empty-state-text">Correction records from the AI audit will appear here.</div>
       </div>
     );
   }

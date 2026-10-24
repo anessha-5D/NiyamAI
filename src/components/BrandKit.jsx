@@ -5,25 +5,15 @@ import BrandGuidelines from './BrandGuidelines';
 import ApprovedFacts from './ApprovedFacts';
 import Terminology from './Terminology';
 import BrandAssets from './BrandAssets';
+import Footer from './Footer';
 
-/**
- * NiyamAI — Member 1: Reusable Brand Kit Entry Component
- * 
- * This is the primary component that the shared NiyamAI application shell can
- * import to embed Member 1's complete Brand Knowledge & Guidelines module.
- * 
- * @param {string} activeSection - Current section ('all', 'profile', 'guidelines', 'facts', 'terminology', 'assets')
- * @param {function} onSectionChange - Optional handler called when section changes
- * @param {boolean} showHero - Whether to render the HeroBanner (default: true)
- * @param {boolean} showLocalTabs - Render self-contained pill sub-navigation (useful when imported into an outer shell)
- */
 export default function BrandKit({
   activeSection,
   activeTab = 'all',
   onSectionChange,
   setActiveTab,
   showHero = true,
-  showLocalTabs = false,
+  showLocalTabs = true,
 }) {
   const resolvedSection = activeSection !== undefined ? activeSection : activeTab;
   const resolvedOnChange = onSectionChange || setActiveTab;
@@ -42,7 +32,7 @@ export default function BrandKit({
 
   return (
     <div className="w-full bg-[#FAF7F2] text-ink-primary font-sans">
-      {/* Optional Embedded Section Tabs (Useful when integrated into a shared team shell) */}
+      {/* Optional Embedded Section Tabs */}
       {showLocalTabs && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 no-scrollbar border-b border-cream-300">
@@ -85,29 +75,36 @@ export default function BrandKit({
         </div>
       )}
 
+      {/* Guidelines */}
       {currentSection === 'guidelines' && (
         <div className="pt-4">
           <BrandGuidelines />
         </div>
       )}
 
+      {/* Facts */}
       {currentSection === 'facts' && (
         <div className="pt-4">
           <ApprovedFacts />
         </div>
       )}
 
+      {/* Terminology */}
       {currentSection === 'terminology' && (
         <div className="pt-4">
           <Terminology />
         </div>
       )}
 
+      {/* Assets */}
       {currentSection === 'assets' && (
         <div className="pt-4">
           <BrandAssets />
         </div>
       )}
+
+      {/* Footer */}
+      <Footer onSelectSection={handleSectionSelect} />
     </div>
   );
 }

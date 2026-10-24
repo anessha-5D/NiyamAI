@@ -57,7 +57,7 @@ export default function Navbar({ activeTab, setActiveTab, onDataReset }) {
                   NIYAMAI
                 </span>
                 <span className="text-[10px] font-mono font-bold tracking-wider uppercase bg-wine-100 text-wine-900 px-2.5 py-0.5 rounded-full border border-wine-200">
-                  Member 1 • Brand Kit
+                  Brand Kit
                 </span>
               </div>
               <p className="text-[11px] text-ink-muted tracking-tight font-medium">

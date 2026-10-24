@@ -114,7 +114,7 @@ export default function CompanyProfile() {
         <div className="flex items-center space-x-2">
           <ShieldAlert className="w-4 h-4 text-amber-800 flex-shrink-0" />
           <span>
-            <strong>Fictional Demo Subject:</strong> {profile.name} is a fictional company for Member 1 testing. These are not real corporate claims.
+            <strong>Fictional Demo Subject:</strong> {profile.name} is a fictional company for brand demonstration testing. These are not real corporate claims.
           </span>
         </div>
         <span className="font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-200/80 text-amber-900">

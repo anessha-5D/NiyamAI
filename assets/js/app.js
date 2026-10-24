@@ -1285,13 +1285,13 @@ function openIntegrationBridge(stepNum) {
   let memberInfo = {};
   if (stepNum === 1) {
     memberInfo = {
-      title: "Step 01: Member 1 — Content Ingestion & Brand Guidelines",
+      title: "Step 01: Content Ingestion & Brand Guidelines",
       desc: "Step 01 imports marketing copy, assigns applicable Brand Book version rules, and passes initial drafts into the governance pipeline.",
       schema: `{
   "id": "AST-2091",
   "title": "Winter Product Catalog - Hero Headline",
   "category": "Corporate Report",
-  "author": "Member 1 (Ingestion Service)",
+  "author": "Brand Ingestion Service",
   "brandGuidelinesRef": "Brand Book v4.2 §3",
   "wordCount": 920,
   "targetChannels": ["Corporate Website", "PR Newswire"]
@@ -1300,7 +1300,7 @@ function openIntegrationBridge(stepNum) {
     };
   } else if (stepNum === 2) {
     memberInfo = {
-      title: "Step 02: Member 2 — Multimodal AI Audit Engine",
+      title: "Step 02: Multimodal AI Audit Engine",
       desc: "Step 02 audits incoming assets across tone of voice, factual claim verification, WCAG accessibility, and visual guidelines.",
       schema: `{
   "assetId": "AST-1082",
@@ -1314,7 +1314,7 @@ function openIntegrationBridge(stepNum) {
     };
   } else if (stepNum === 3) {
     memberInfo = {
-      title: "Step 03: Member 3 — Violation Detection & Corrections",
+      title: "Step 03: Violation Detection & Corrections",
       desc: "Step 03 identifies specific brand violations, surfaces citations from company guidelines, and provides intent-preserving corrections.",
       schema: `{
   "assetId": "AST-1083",
@@ -1326,7 +1326,7 @@ function openIntegrationBridge(stepNum) {
     };
   } else if (stepNum === 4) {
     memberInfo = {
-      title: "Step 04: Member 4 — Human Review & Approval Sign-offs",
+      title: "Step 04: Human Review & Approval Sign-offs",
       desc: "Step 04 routes flagged assets through tiered human review, collects authorized signatures, and feeds approvals to Step 05.",
       schema: `{
   "assetId": "AST-1087",
@@ -1358,7 +1358,7 @@ async function simulateInboundFromMember(stepNum) {
     const newAsset = window.NiyamIntegrationAPI.ingestAssetFromMember1({
       title: "Winter Product Catalog — Hero Headline & Copy",
       category: "Press Release",
-      author: "Member 1 (Guideline Ingest)",
+      author: "Brand Ingestion Service",
       targetChannels: ["Corporate Website", "PR Newswire"]
     });
     // Give it initial scores
@@ -1373,9 +1373,9 @@ async function simulateInboundFromMember(stepNum) {
     savePersistedState();
     renderAssets();
     switchTab('release-gate');
-    showToast("Sample asset ingested from Member 1 into Step 05 Release Gate!", "success");
+    showToast("Sample asset ingested into Release Gate!", "success");
   } else if (stepNum === 2) {
-    showToast("Audit scores verified from Member 2 AI Audit Engine.", "info");
+    showToast("Audit scores verified from AI Audit Engine.", "info");
   } else if (stepNum === 3) {
     await simulateFullRemediation('AST-1083');
   } else if (stepNum === 4) {

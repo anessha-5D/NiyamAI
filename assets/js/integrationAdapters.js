@@ -231,10 +231,10 @@
           {
             step: 1,
             stage: "INGEST",
-            actor: payload.author || "Content Ingestion Lead (Member 1)",
+            actor: payload.author || "Content Ingestion Lead",
             role: "Content Creator",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            action: "Ingested via Member 1 Guideline Connector",
+            action: "Ingested via Brand Kit Connector",
             detail: `Imported asset content with target brand guidelines: ${payload.brandGuidelinesRef || "Brand Book v4.1"}.`,
             status: "completed"
           }
@@ -262,7 +262,7 @@
       asset.auditTrail.push({
         step: asset.auditTrail.length + 1,
         stage: "AI_AUDIT",
-        actor: "Multimodal AI Audit Engine (Member 2)",
+        actor: "Multimodal AI Audit Engine",
         role: "Automated Governance",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         action: "Multi-vector brand compliance scan",
@@ -291,7 +291,7 @@
       asset.auditTrail.push({
         step: asset.auditTrail.length + 1,
         stage: "CORRECTION",
-        actor: correctionPayload.actor || "Intent-Preserving Correction Engine (Member 3)",
+        actor: correctionPayload.actor || "Intent-Preserving Correction Engine",
         role: "Correction Specialist",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         action: "Applied AI intent-preserving remediation",

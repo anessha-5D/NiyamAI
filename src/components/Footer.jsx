@@ -16,7 +16,7 @@ export default function Footer({ onSelectSection }) {
               </span>
             </div>
             <p className="text-xs text-cream-300/80 leading-relaxed">
-              Member 1 — Brand Knowledge & Guidelines module for NiyamAI. A standalone brand governance engine managing brand identity rules.
+              Brand Knowledge & Guidelines module for NiyamAI. A standalone brand governance engine managing brand identity rules.
             </p>
             <div className="pt-1 flex items-center space-x-2 text-[11px] text-wine-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -120,7 +120,7 @@ export default function Footer({ onSelectSection }) {
 
         {/* Bottom Sub-bar */}
         <div className="mt-12 pt-8 border-t border-wine-900 flex flex-col sm:flex-row items-center justify-between text-xs text-wine-300/80 gap-4">
-          <p>© 2026 NiyamAI • Member 1 — Brand Knowledge & Guidelines Module.</p>
+          <p>© 2026 NiyamAI • Brand Knowledge & Guidelines Module.</p>
           <div className="flex items-center space-x-4">
             <span className="text-[11px] font-mono">Theme: Editorial Minimalist</span>
             <span className="text-[11px] font-mono">Colors: Wine & Pastels</span>

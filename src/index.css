@@ -1,18 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --color-wine-950: #1C060D;
+  --color-wine-900: #330B18;
+  --color-wine-850: #3F0E1E;
+  --color-wine-800: #4E1227;
+  --color-wine-700: #691D37;
+  --color-wine-600: #8C264A;
+  --color-wine-300: #E8A8BB;
+  --color-wine-200: #F4C5D0;
+  --color-wine-100: #F4E8EC;
+  --color-wine-50: #FAF2F5;
+
+  --color-plum-950: #1C060D;
+  --color-plum-900: #330B18;
+  --color-plum-850: #3F0E1E;
+  --color-plum-800: #4E1227;
+  --color-plum-700: #691D37;
+  --color-plum-600: #8C264A;
+  --color-plum-100: #F4E8EC;
+  --color-plum-50: #FAF2F5;
+
+  --color-cream-50: #FFFCF7;
+  --color-cream-100: #FAF7F2;
+  --color-cream-200: #F5EFEB;
+  --color-cream-300: #EADCD5;
+  --color-cream-400: #D8C5BC;
+
+  --color-blush-50: #FAF7F5;
+  --color-blush-100: #F5EEEA;
+  --color-blush-200: #EADCD5;
+
+  --color-ink-primary: #1A0A0F;
+  --color-ink-secondary: #6B5A62;
+  --color-ink-muted: #9C8A93;
+
+  --color-pastel-butter: #FFF0B3;
+  --color-pastel-sage: #E3ECE2;
+  --color-pastel-lavender: #ECE5F2;
+  --color-pastel-peach: #FCE8DF;
+  --color-pastel-slate: #E0EBF5;
+
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-editorial: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
 /* ============================================================
-   NiyamAI — Global Styles
-   Design tokens inspired by the NOVA SWEATS reference image:
-   • Deep wine/maroon hero: #6B1B3A / #8B2252
-   • Cream/off-white surfaces: #FAF7F2 / #F5F0E8
-   • Soft rose accent: #F4C5D0 / #ECBED0
-   • Sage green accent: #D4E5C0
-   • Lavender accent: #D4CEEA
-   • Text: #1A0A0F (dark) / #6B5A62 (muted)
+   NiyamAI — Global Styles & Design Tokens
 ============================================================ */
 
 *, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 :root {
@@ -51,6 +90,8 @@
 body {
   background-color: var(--cream);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -62,8 +103,6 @@ h1, h2, h3 {
 button {
   cursor: pointer;
   font-family: inherit;
-  border: none;
-  outline: none;
   transition: all 0.2s ease;
 }
 
@@ -90,6 +129,6 @@ textarea, input {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--cream-dark); }
 ::-webkit-scrollbar-thumb { background: var(--rose-dark); border-radius: var(--radius-pill); }
