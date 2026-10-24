@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap');
+
+:root {
+  --color-plum-950: #1c060d;
+  --color-plum-900: #330b18;
+  --color-plum-850: #3f0e1e;
+  --color-plum-800: #4e1227;
+  --color-plum-700: #691d37;
+  --color-plum-600: #8c264a;
+  
+  --color-blush-bg: #FAF7F5;
+  --color-blush-surface: #FFFFFF;
+  --color-blush-card: #F7F1EE;
+  --color-blush-border: #E8DED8;
+
+  --pastel-lavender: #ECE5F2;
+  --pastel-lavender-border: #DCD0E6;
+  --pastel-sage: #E3ECE2;
+  --pastel-sage-border: #CFE0CD;
+  --pastel-peach: #FCE8DF;
+  --pastel-peach-border: #F7D5C4;
+  --pastel-slate: #E0EBF5;
+  --pastel-slate-border: #CADCEE;
+
+  --text-primary: #211218;
+  --text-secondary: #6B5760;
+  --text-muted: #948089;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--color-blush-bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: 'Syne', sans-serif;
+}
+
+.font-editorial {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1eae5;
+}
+::-webkit-scrollbar-thumb {
+  background: #c5b4ad;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-plum-700);
+}
+
+/* Luxury card hover effects matching video */
+.luxury-card {
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.luxury-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -8px rgba(63, 14, 30, 0.08);
+}
+
+/* Pill button styles matching video */
+.btn-pill-wine {
+  background-color: var(--color-plum-850);
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(51, 11, 24, 0.16);
+}
+.btn-pill-wine:hover {
+  background-color: var(--color-plum-700);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(51, 11, 24, 0.24);
+}
+.btn-pill-wine:active {
+  transform: translateY(0);
+}
+
+.btn-pill-outline {
+  border: 1.5px solid var(--color-plum-800);
+  color: var(--color-plum-850);
+  background: transparent;
+  border-radius: 9999px;
+  padding: 0.65rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-pill-outline:hover {
+  background-color: var(--color-plum-850);
+  color: #ffffff;
+}
+
+/* Status badge pills */
+.badge-pill {
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Audit timeline line */
+.timeline-stem {
+  position: absolute;
+  top: 1.5rem;
+  bottom: 0;
+  left: 1.25rem;
+  width: 2px;
+  background: #E4D7CF;
+}
+
+/* Drawer transitions */
+.drawer-backdrop {
+  transition: opacity 0.3s ease;
+}
+.drawer-content {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Print Certificate specific styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #certificateModal, #certificateModal * {
+    visibility: visible;
+  }
+  #certificateModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
