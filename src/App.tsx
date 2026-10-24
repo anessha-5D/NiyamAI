@@ -25,7 +25,7 @@ export type ActiveModuleTab = 'dashboard' | 'brand-kit' | 'text-audit' | 'visual
 type WorkspaceSubTab = 'workspace' | 'history';
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState<ActiveModuleTab>('corrections');
+  const [activeModule, setActiveModule] = useState<ActiveModuleTab>('dashboard');
   const [records, setRecords] = useState<CorrectionRecord[]>(() => loadRecords());
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [selectedId, setSelectedId] = useState<string | null>(records[0]?.id ?? null);
