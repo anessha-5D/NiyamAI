@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NiyamAI — Brand Experience Studio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="navbar">
+        <a class="brand" href="#">
+            <span class="brand-symbol">N</span>
+            <span class="brand-name">Niyam<span>AI</span><small>BRAND EXPERIENCE STUDIO</small></span>
+        </a>
+
+        <nav class="navigation">
+            <a href="#brand-audit">Visual Audit</a>
+            <a href="#accessibility-tools">Accessibility</a>
+            <a href="#privacy-tools">Privacy</a>
+            <a href="#quick-actions">Quick Actions</a>
+        </nav>
+
+        <a href="#brand-audit" class="nav-button">Let's begin ↗</a>
+    </header>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero" id="studio">
+            <div class="hero-content">
+                <span class="eyebrow light-eyebrow">✳ &nbsp; THE ART OF BRAND CONSISTENCY</span>
+
+                <h1>
+                    Beautifully<br>
+                    <span>on brand.</span>
+                </h1>
+
+                <p>
+                    Every detail speaks for your brand. Make sure
+                    every colour, every visual and every word tells
+                    the right story.
+                </p>
+
+                <a href="#brand-audit" class="hero-button">
+                    Discover your brand score <span>↗</span>
+                </a>
+
+                <div class="hero-footnote">
+                    <span class="mini-dot"></span>
+                    Your creative. Your identity. Your standards.
+                </div>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-orbit orbit-one"></div>
+                <div class="hero-orbit orbit-two"></div>
+
+                <div class="hero-poster">
+                    <div class="poster-top">N. / CREATIVE STANDARDS</div>
+                    <div class="poster-flower">✳</div>
+                    <div class="poster-shape shape-a"></div>
+                    <div class="poster-shape shape-b"></div>
+                    <div class="poster-shape shape-c"></div>
+                    <div class="poster-title">Make it<br><em>memorable.</em></div>
+                    <div class="poster-bottom">A BRAND WITH PURPOSE</div>
+                </div>
+
+                <div class="floating-pill pill-top">✦ Visual harmony</div>
+                <div class="floating-pill pill-bottom">♡ Made with intention</div>
+            </div>
+
+            <div class="hero-side-note">DESIGNED TO MAKE EVERY DETAIL COUNT</div>
+        </section>
+
+        <!-- INTRODUCTION -->
+        <section class="intro">
+            <div class="intro-art" aria-hidden="true">
+                <div class="intro-art-back"></div>
+                <div class="intro-art-circle"></div>
+                <div class="intro-art-block block-one"></div>
+                <div class="intro-art-block block-two"></div>
+                <div class="intro-art-block block-three"></div>
+                <span class="intro-star">✳</span>
+            </div>
+
+            <div class="intro-copy">
+                <span class="eyebrow">A LITTLE MORE THOUGHTFUL</span>
+                <h2>Created with care.<br><span>Reviewed with purpose.</span></h2>
+                <p>
+                    NiyamAI helps teams review creative content before
+                    it goes live. Keep brand visuals consistent,
+                    improve accessibility and identify sensitive
+                    information — all in one thoughtful workspace.
+                </p>
+                <div class="intro-highlight">
+                    <span>✦</span>
+                    Good design is more than what meets the eye.
+                </div>
+            </div>
+        </section>
+
+        <!-- UPLOAD STUDIO -->
+        <section class="studio-section" id="brand-audit">
+            <div class="section-top">
+                <div>
+                    <span class="eyebrow">01 / YOUR CREATIVE WORKSPACE</span>
+                    <h2>Make it <span>yours.</span></h2>
+                    <p>Upload a creative and give your brand a closer look.</p>
+                </div>
+                <div class="studio-index">THE VISUAL STUDIO <span>✳</span></div>
+            </div>
+
+            <div class="workspace">
+                <section class="workspace-panel upload-panel">
+                    <div class="panel-title">
+                        <div class="panel-symbol pink-symbol">↑</div>
+                        <div>
+                            <h3>Bring your creative</h3>
+                            <p>Choose an image from your device.</p>
+                        </div>
+                    </div>
+
+                    <label for="imageUpload" class="upload-zone">
+                        <div class="upload-art">
+                            <div class="upload-circle">↑</div>
+                            <span class="upload-star">✳</span>
+                        </div>
+                        <h4>A canvas full of possibilities.</h4>
+                        <p>Drop your image here or <span>browse files</span></p>
+                        <small>PNG &nbsp;·&nbsp; JPG &nbsp;·&nbsp; WEBP</small>
+                    </label>
+
+                    <input
+                        type="file"
+                        id="imageUpload"
+                        accept="image/png,image/jpeg,image/webp"
+                    >
+
+                    <div class="upload-footer">
+                        <span>♧</span>
+                        Your image is previewed locally in your browser.
+                    </div>
+                </section>
+
+                <section class="workspace-panel preview-panel">
+                    <div class="panel-title preview-title">
+                        <div>
+                            <h3>Your creative canvas</h3>
+                            <p>A live preview of your selected image.</p>
+                        </div>
+                        <span class="live-label"><i></i> LIVE PREVIEW</span>
+                    </div>
+
+                    
+<div id="imagePreview" class="preview-area">
+    <div class="empty-state">
+        <div class="empty-icon">▧<span>✳</span></div>
+        <h4>Something lovely starts here.</h4>
+        <p>Your uploaded image will appear here.</p>
+    </div>
+</div>
+
+<div id="creativeDetails" class="creative-details" hidden>
+    <h4>Creative Information</h4>
+    <div class="creative-details-grid">
+        <p><strong>File name:</strong> <span id="detailFileName">—</span></p>
+        <p><strong>Format:</strong> <span id="detailFormat">—</span></p>
+        <p><strong>File size:</strong> <span id="detailFileSize">—</span></p>
+        <p><strong>Dimensions:</strong> <span id="detailDimensions">—</span></p>
+        <p><strong>Aspect ratio:</strong> <span id="detailAspectRatio">—</span></p>
+        <p><strong>Upload status:</strong> <span id="detailStatus">Waiting for image</span></p>
+    </div>
+</div>
+
+                </section>
+            </div>
+
+            <div class="studio-bottom">
+                <span>✳ &nbsp; YOUR BRAND DESERVES THE DETAILS</span>
+                <span>SUPPORTED FORMATS: PNG / JPG / WEBP</span>
+            </div>
+        </section>
+
+        <!-- AUDIT CATEGORIES -->
+        <section class="collections" id="audit-categories">
+            <div class="section-top collection-heading">
+                <div>
+                    <span class="eyebrow">02 / WHAT WE REVIEW</span>
+                    <h2>Good design goes <span>beyond looks.</span></h2>
+                    <p>Three thoughtful checks. One more confident creative.</p>
+                </div>
+                <span class="collection-flower">✳</span>
+            </div>
+
+            <div class="collection-grid">
+                <article class="collection-card card-pink">
+                    <div class="collection-art art-brand">
+                        <div class="art-disc disc-one"></div>
+                        <div class="art-disc disc-two"></div>
+                        <div class="art-disc disc-three"></div>
+                        <div class="art-caption">COLOUR & IDENTITY</div>
+                    </div>
+                    <div class="collection-info">
+                        <div class="card-number">01 / VISUAL IDENTITY</div>
+                        <h3>Brand consistency</h3>
+                        <p>Review visual colours and brand assets against your approved guidelines.</p>
+                        <a href="#brand-audit" class="text-link">Explore visual audit <span>→</span></a>
+                    </div>
+                </article>
+
+                <article class="collection-card card-green">
+                    <div class="collection-art art-accessibility">
+                        <div class="contrast-tile">Aa</div>
+                        <div class="contrast-label">DESIGN FOR EVERYONE</div>
+                        <div class="contrast-lines"><i></i><i></i><i></i></div>
+                    </div>
+                    <div class="collection-info">
+                        <div class="card-number">02 / INCLUSIVE DESIGN</div>
+                        <h3>Accessibility</h3>
+                        <p>Review image descriptions and text contrast to support accessible content.</p>
+                        <a href="#accessibility-tools" class="text-link">Explore accessibility <span>→</span></a>
+                    </div>
+                </article>
+
+                <article class="collection-card card-lilac" id="privacy">
+                    <div class="collection-art art-privacy">
+                        <div class="privacy-orbit"></div>
+                        <div class="privacy-lock">◇</div>
+                        <div class="privacy-mini">YOUR DATA, TREATED WITH CARE</div>
+                    </div>
+                    <div class="collection-info">
+                        <div class="card-number">03 / DATA PROTECTION</div>
+                        <h3>Privacy shield</h3>
+                        <p>Identify email addresses and phone numbers before external AI processing.</p>
+                        <a href="#privacy-tools" class="text-link">Explore privacy tools <span>→</span></a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ACCESSIBILITY TOOL -->
+        <section class="tool-section" id="accessibility-tools">
+            <div class="tool-copy">
+                <span class="eyebrow">03 / ACCESSIBILITY STUDIO</span>
+                <h2>Thoughtful design<br><span>includes everyone.</span></h2>
+                <p>
+                    Add an image description and check the contrast
+                    between two colours. Small improvements can make
+                    content easier for more people to use.
+                </p>
+                <div class="tool-note">✳ &nbsp; Simple checks, more inclusive content.</div>
+            </div>
+
+            <div class="tool-box">
+                <label for="altText">Image description (alt text)</label>
+                <textarea id="altText" rows="3" placeholder="Describe the important information in your image..."></textarea>
+                <button type="button" class="action-button" id="checkAltText">Review alt text ↗</button>
+                <div id="altTextResult" class="result-message" aria-live="polite">
+                    Your accessibility feedback will appear here.
+                </div>
+
+                <div class="tool-divider"></div>
+
+                <h3>Colour contrast check</h3>
+                <div class="colour-inputs">
+                    <label>Text colour
+                        <input type="color" id="textColor" value="#4c1029">
+                    </label>
+                    <label>Background
+                        <input type="color" id="backgroundColor" value="#fffaf5">
+                    </label>
+                </div>
+                <button type="button" class="action-button secondary-button" id="checkContrast">Check contrast ↗</button>
+                <div id="contrastResult" class="result-message" aria-live="polite">
+                    Choose two colours to review their contrast.
+                </div>
+            </div>
+        </section>
+
+        <!-- PRIVACY TOOL -->
+        <section class="privacy-section" id="privacy-tools">
+            <div class="privacy-copy">
+                <span class="eyebrow light-eyebrow">04 / YOUR PRIVACY MATTERS</span>
+                <h2>Keep the details private.<br><span>Keep the ideas brilliant.</span></h2>
+                <p>
+                    Check text for common personal details and preview
+                    a masked version before sharing it with an external
+                    AI service.
+                </p>
+                <div class="privacy-assurance">◇ &nbsp; This prototype checks text locally in your browser.</div>
+            </div>
+
+            <div class="privacy-workspace">
+                <label for="privacyText">Text to review</label>
+                <textarea id="privacyText" rows="5" placeholder="Paste your draft here. For example: Contact us at hello@example.com or 9876543210."></textarea>
+                <button type="button" class="privacy-button" id="maskPrivacy">Detect & mask details ↗</button>
+
+                <div class="masked-output">
+                    <div class="masked-heading">
+                        <span>MASKED PREVIEW</span>
+                        <span class="local-label">LOCAL CHECK</span>
+                    </div>
+                    <p id="maskedText" aria-live="polite">Your masked text will appear here.</p>
+                    <button type="button" id="copyMasked" class="copy-button">Copy masked text</button>
+                    <span id="copyStatus" aria-live="polite"></span>
+                </div>
+            </div>
+        </section>
+
+
+<!-- QUICK ACTIONS -->
+<section class="quick-actions" id="quick-actions">
+    <span class="eyebrow">05 / YOUR WORKSPACE</span>
+    <h2>Everything you need, <span>in one place.</span></h2>
+    <p class="quick-intro">
+        Choose a task and jump straight to the tool you need.
+    </p>
+
+    <div class="quick-grid">
+        <a href="#brand-audit" class="quick-card">
+            <span class="quick-icon">✳</span>
+            <span class="quick-number">01 / VISUALS</span>
+            <h3>Visual Audit</h3>
+            <p>Upload and preview your creative.</p>
+            <span class="quick-link">Open tool ↗</span>
+        </a>
+
+        <a href="#accessibility-tools" class="quick-card">
+            <span class="quick-icon">Aa</span>
+            <span class="quick-number">02 / ACCESSIBILITY</span>
+            <h3>Accessibility Check</h3>
+            <p>Review alt text and colour contrast.</p>
+            <span class="quick-link">Open tool ↗</span>
+        </a>
+
+        <a href="#privacy-tools" class="quick-card">
+            <span class="quick-icon">◇</span>
+            <span class="quick-number">03 / PRIVACY</span>
+            <h3>Privacy Shield</h3>
+            <p>Detect and mask sensitive text.</p>
+            <span class="quick-link">Open tool ↗</span>
+        </a>
+
+        <a href="#brand-audit" class="quick-card">
+            <span class="quick-icon">↑</span>
+            <span class="quick-number">04 / GET STARTED</span>
+            <h3>Start a New Review</h3>
+            <p>Return to the upload workspace.</p>
+            <span class="quick-link">Start now ↗</span>
+        </a>
+    </div>
+</section>
+
+        <!-- CLOSING -->
+        <section class="closing">
+            <div class="closing-decoration">✳</div>
+            <span class="eyebrow">THE NIYAMAI WAY</span>
+            <h2>Every detail matters.<br><span>Make every detail count.</span></h2>
+            <a href="#brand-audit" class="closing-button">Back to your creative ↗</a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <a href="#" class="footer-logo">NIYAM<span>AI</span></a>
+        <p>Thoughtful technology. Consistent brands.</p>
+        <span>VISUAL AUDIT · ACCESSIBILITY · PRIVACY</span>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
