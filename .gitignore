@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 backend/.env
+
+# Environment variables
+.env
+.env.*
+!.env.example

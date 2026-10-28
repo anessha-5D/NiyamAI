@@ -4,6 +4,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { auditRouter } from './routes/auditRoutes.js';
+import { persistenceRouter } from './routes/persistenceRoutes.js';
 
 // Securely load environment variables from backend/.env or root .env
 const envLocations = [
@@ -60,6 +61,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Register API Routes
 app.use('/api', auditRouter);
+app.use('/api', persistenceRouter);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
