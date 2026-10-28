@@ -11,7 +11,9 @@ import {
   Activity,
   Layers,
   Database,
-  Clock
+  Clock,
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
 import {
   runContentAudit,
@@ -26,10 +28,13 @@ import {
   getAuditById,
   type AuditReportSummary
 } from '../services/databaseService';
+import { getUploadedBrandDocument } from '../services/pdfBrandService';
+import type { UploadedBrandDocument } from '../types/brandPdf';
 import type { CorrectionRecord } from '../types';
 
 interface TextAuditProps {
   onSendToCorrectionWorkspace?: (record: Omit<CorrectionRecord, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onNavigateToPdfUpload?: () => void;
   pushToast?: (msg: string, type: 'info' | 'success' | 'warning' | 'error') => void;
 }
 
@@ -51,7 +56,7 @@ const SAMPLE_PROMPTS = [
   }
 ];
 
-export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditProps) {
+export function TextAudit({ onSendToCorrectionWorkspace, onNavigateToPdfUpload, pushToast }: TextAuditProps) {
   const [activeTab, setActiveTab] = useState<'scanner' | 'saved'>('scanner');
   const [inputText, setInputText] = useState(SAMPLE_PROMPTS[0].text);
   const [channel, setChannel] = useState<AuditChannel>('ads');
@@ -61,6 +66,10 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
   const [sentFindingIds, setSentFindingIds] = useState<Record<string, boolean>>({});
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
+
+  // PDF Brand Guidelines state
+  const [uploadedDoc, setUploadedDoc] = useState<UploadedBrandDocument | null>(null);
+  const [enablePdfRules, setEnablePdfRules] = useState<boolean>(true);
 
   // Saved Audits state
   const [savedAudits, setSavedAudits] = useState<AuditReportSummary[]>([]);
@@ -86,6 +95,13 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
     checkAuditHealth().then(status => {
       setBackendStatus(status);
     });
+
+    // Load active uploaded brand document from localStorage
+    const doc = getUploadedBrandDocument();
+    if (doc) {
+      setUploadedDoc(doc);
+    }
+
     // Silently populate saved audits count if backend is online
     loadSavedAudits();
   }, []);
@@ -99,7 +115,14 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
     setSaveStatus('idle');
     setSaveErrorMessage(null);
     try {
-      const res = await runContentAudit(inputText, channel);
+      // Refresh current document state from localStorage in case it was updated in another tab/component
+      const latestDoc = getUploadedBrandDocument();
+      if (latestDoc && (!uploadedDoc || latestDoc.id !== uploadedDoc.id)) {
+        setUploadedDoc(latestDoc);
+      }
+      const docToUse = enablePdfRules ? (latestDoc || uploadedDoc) : null;
+
+      const res = await runContentAudit(inputText, channel, docToUse);
       setReport(res);
       setSentFindingIds({});
       if (res.findings.length > 0) {
@@ -173,22 +196,35 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
     const currentReport = sourceReport || report;
     const draftText = currentReport?.inputText || inputText;
     const auditChannel = currentReport?.channel || channel;
+    const isPdfFinding = finding.source === 'pdf_guideline';
+
+    const guidelineRefTitle = isPdfFinding
+      ? `PDF: ${finding.pdfSource || 'Brand Guidelines'} (${finding.ruleId})`
+      : finding.category.replace('_', ' ').toUpperCase();
+
+    const guidelineSection = isPdfFinding
+      ? (finding.pageNumber ? `Page ${finding.pageNumber} · Rule ${finding.ruleId}` : `Rule ${finding.ruleId}`)
+      : finding.ruleId;
 
     onSendToCorrectionWorkspace({
       contentTitle: `${auditChannel.toUpperCase()} Draft — ${finding.matchedText}`,
       contentType: auditChannel === 'ads' ? 'ad-copy' : auditChannel === 'social' ? 'social-media' : 'website',
       originalContent: draftText,
-      detectedIssue: finding.explanation.split('.')[0] || 'Brand Guideline Violation',
+      detectedIssue: isPdfFinding
+        ? `[PDF Rule ${finding.ruleId}] ${finding.explanation.split('.')[0] || 'Brand Guideline Violation'}`
+        : finding.explanation.split('.')[0] || 'Brand Guideline Violation',
       issueExplanation: finding.explanation,
       severity: finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'high' : 'medium',
       guidelineRef: {
-        id: finding.ruleId || 'GL-AUDIT',
-        title: finding.category.replace('_', ' ').toUpperCase(),
-        section: finding.ruleId
+        id: finding.ruleId || (isPdfFinding ? 'PDF-RULE' : 'GL-AUDIT'),
+        title: guidelineRefTitle,
+        section: guidelineSection
       },
       aiSuggestion: {
         suggestedText: draftText.replace(finding.matchedText, finding.recommendedCorrection),
-        explanation: `Replace prohibited/unsubstantiated "${finding.matchedText}" with compliant alternative "${finding.recommendedCorrection}".`,
+        explanation: isPdfFinding
+          ? `[PDF ${finding.ruleId}${finding.pageNumber ? ` p.${finding.pageNumber}` : ''}] Replace "${finding.matchedText}" with compliant alternative "${finding.recommendedCorrection}".`
+          : `Replace prohibited/unsubstantiated "${finding.matchedText}" with compliant alternative "${finding.recommendedCorrection}".`,
         confidence: finding.confidence || 0.92,
         generatedBy: 'member2-audit'
       },
@@ -251,6 +287,21 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
             </span>
           </div>
         </div>
+
+        {/* Uploaded PDF Brand Context Badge (if active in report) */}
+        {reportToRender.uploadedPdfDoc && (
+          <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-2.5 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5 text-purple-700" />
+              <span className="text-purple-950 font-medium">
+                PDF Source: <strong>{reportToRender.uploadedPdfDoc.fileName}</strong>
+              </span>
+            </div>
+            <span className="text-[10px] font-bold font-mono bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full border border-purple-200">
+              {reportToRender.uploadedPdfDoc.totalRulesApplied} Rules Audited
+            </span>
+          </div>
+        )}
 
         {/* Overall Score & Grade Badge */}
         <div className="flex items-center justify-between bg-cream-50 p-4 rounded-xl border border-cream-200">
@@ -357,20 +408,26 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
             <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto" />
             <h4 className="text-sm font-bold text-ink-primary">Zero Violations Found!</h4>
             <p className="text-xs text-ink-muted max-w-md mx-auto">
-              This copy strictly adheres to NovaTech guidelines, approved 99.9% uptime SLA commitments, and enterprise vocabulary.
+              This copy strictly adheres to brand guidelines, approved 99.9% uptime SLA commitments, and enterprise vocabulary.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {reportToRender.findings.map(finding => {
               const isSent = sentFindingIds[finding.id];
+              const isPdfFinding = finding.source === 'pdf_guideline';
+
               return (
                 <div
                   key={finding.id}
-                  className="p-4 rounded-xl border border-cream-300 bg-cream-50/60 hover:bg-white transition space-y-2.5"
+                  className={`p-4 rounded-xl border transition space-y-2.5 ${
+                    isPdfFinding
+                      ? 'border-purple-200 bg-purple-50/30 hover:bg-white'
+                      : 'border-cream-300 bg-cream-50/60 hover:bg-white'
+                  }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           finding.severity === 'critical'
@@ -382,6 +439,19 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                       >
                         {finding.severity}
                       </span>
+
+                      {/* Explicitly Distinguish PDF Guideline vs Built-in Rule */}
+                      {isPdfFinding ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-900 border border-purple-300">
+                          <FileText className="w-3 h-3 text-purple-700" />
+                          <span>PDF Guideline · {finding.ruleId}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cream-200 text-stone-700 border border-cream-300">
+                          <span>Built-in Rule · {finding.ruleId || 'RULE'}</span>
+                        </span>
+                      )}
+
                       <span className="text-xs font-semibold text-ink-primary">
                         Found:{' '}
                         <code className="bg-rose-100/80 text-rose-900 px-1.5 py-0.5 rounded font-mono text-xs">
@@ -415,6 +485,21 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                       </button>
                     )}
                   </div>
+
+                  {/* PDF Document Citation Badge (if from uploaded PDF) */}
+                  {isPdfFinding && (finding.pdfSource || finding.pageNumber) && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-purple-900 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200">
+                      <FileText className="w-3 h-3 text-purple-700 shrink-0" />
+                      <span>
+                        <strong>PDF Reference:</strong> {finding.pdfSource || 'Brand Document'}
+                        {finding.pageNumber && (
+                          <span className="ml-1.5 font-mono text-[10px] bg-purple-200/70 text-purple-950 px-1.5 py-0.5 rounded">
+                            Page {finding.pageNumber}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
 
                   <p className="text-xs text-ink-secondary leading-relaxed">{finding.explanation}</p>
 
@@ -473,7 +558,9 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                 {backendStatus.online ? `API Port 5001 (${backendStatus.engineMode || 'Hybrid'})` : 'Local Deterministic Fallback'}
               </span>
             </div>
-            <span className="text-[11px] text-wine-300">Target Brand: NovaTech Workflow Software</span>
+            <span className="text-[11px] text-wine-300">
+              Target Brand: {uploadedDoc && enablePdfRules ? `NovaTech + ${uploadedDoc.fileName}` : 'NovaTech Workflow Software'}
+            </span>
           </div>
         </div>
       </div>
@@ -535,6 +622,107 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
       {/* VIEW 1: AUDIT SCANNER (Active by default) */}
       {activeTab === 'scanner' && (
         <>
+          {/* Governance Source Card (PDF Brand Guidelines Integration) */}
+          <div className="bg-white rounded-2xl border border-cream-300 p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                    uploadedDoc ? 'bg-wine-900 text-white shadow-xs' : 'bg-cream-100 text-ink-secondary border border-cream-300'
+                  }`}
+                >
+                  <FileText className={`w-5 h-5 ${uploadedDoc ? 'text-pastel-butter' : 'text-ink-secondary'}`} />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-ink-secondary">
+                      Active Governance Source:
+                    </span>
+                    {uploadedDoc ? (
+                      <span className="text-sm font-bold text-wine-950 font-display truncate max-w-xs sm:max-w-md" title={uploadedDoc.fileName}>
+                        {uploadedDoc.fileName}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-ink-primary">
+                        Built-in NovaTech SLA & Terminology
+                      </span>
+                    )}
+                    {uploadedDoc && (
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          enablePdfRules
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-stone-200 text-stone-700 border border-stone-300'
+                        }`}
+                      >
+                        {enablePdfRules ? 'PDF Rules Active' : 'PDF Rules Paused'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-ink-muted flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    {uploadedDoc ? (
+                      <>
+                        <span>
+                          <strong>{uploadedDoc.summary?.totalRules ?? uploadedDoc.guidelines?.length ?? 0}</strong> extracted rules
+                        </span>
+                        <span>·</span>
+                        <span>{uploadedDoc.pageCount} {uploadedDoc.pageCount === 1 ? 'page' : 'pages'}</span>
+                        <span>·</span>
+                        <span className="text-ink-secondary">
+                          {enablePdfRules
+                            ? 'Active in scanner alongside built-in enterprise rules.'
+                            : 'Rules disabled; scanner is only checking built-in rules.'}
+                        </span>
+                      </>
+                    ) : (
+                      <span>
+                        Upload a brand manual PDF in Brand Kit to enforce custom prohibited claims, mandatory disclaimers, and voice rules.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+                {uploadedDoc && (
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 rounded-xl bg-cream-100 border border-cream-200 hover:bg-cream-200 transition">
+                    <input
+                      type="checkbox"
+                      checked={enablePdfRules}
+                      onChange={e => setEnablePdfRules(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-8 h-4.5 flex items-center rounded-full p-0.5 transition-colors ${
+                        enablePdfRules ? 'bg-wine-900' : 'bg-stone-300'
+                      }`}
+                    >
+                      <div
+                        className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform ${
+                          enablePdfRules ? 'translate-x-3.5' : 'translate-x-0'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-ink-primary">
+                      {enablePdfRules ? 'Rules Enabled' : 'Rules Disabled'}
+                    </span>
+                  </label>
+                )}
+
+                {onNavigateToPdfUpload && (
+                  <button
+                    onClick={onNavigateToPdfUpload}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 border border-cream-300 text-wine-900 font-semibold text-xs transition cursor-pointer shadow-2xs"
+                    title="Open PDF Brand Guidelines Upload screen"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-wine-800" />
+                    <span>{uploadedDoc ? 'Manage / Change PDF →' : 'Upload Brand Guidelines PDF →'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Editor & Input Panel */}
             <div className="lg:col-span-7 space-y-4">
@@ -605,7 +793,11 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                 <div className="mt-4 pt-3 border-t border-cream-200 flex items-center justify-between">
                   <div className="text-xs text-ink-muted flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-wine-800" />
-                    <span>Checks against 11 prohibited patterns, SLA facts & channel tone</span>
+                    <span>
+                      {uploadedDoc && enablePdfRules
+                        ? `Checks against built-in rules + ${uploadedDoc.summary?.totalRules || uploadedDoc.guidelines?.length || 0} rules from ${uploadedDoc.fileName}`
+                        : 'Checks against 11 prohibited patterns, SLA facts & channel tone'}
+                    </span>
                   </div>
                   <button
                     onClick={handleRunAudit}
@@ -651,7 +843,7 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
         </>
       )}
 
-      {/* VIEW 2: SAVED AUDITS (Round 3 Improvement 1) */}
+      {/* VIEW 2: SAVED AUDITS */}
       {activeTab === 'saved' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Saved Audits List */}
@@ -771,6 +963,16 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                           </p>
                         )}
 
+                        {/* PDF Document Citation Badge (if audit used a PDF) */}
+                        {item.uploadedPdfDoc && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-purple-900 bg-purple-50/80 px-2 py-0.5 rounded border border-purple-200 w-fit">
+                            <FileText className="w-2.5 h-2.5 text-purple-700 shrink-0" />
+                            <span className="truncate max-w-[200px]" title={item.uploadedPdfDoc.fileName}>
+                              PDF: {item.uploadedPdfDoc.fileName}
+                            </span>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center justify-between gap-1 pt-1.5 border-t border-cream-200/80 text-[11px] text-ink-muted">
                           {/* Date/Time (if exists) */}
                           {item.timestamp ? (
@@ -843,6 +1045,14 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                     <span className="text-[11px] text-ink-muted block mt-0.5">
                       {report.timestamp ? new Date(report.timestamp).toLocaleString() : ''} · Channel: {report.channel}
                     </span>
+                    {report.uploadedPdfDoc && (
+                      <span className="text-[11px] text-purple-900 font-medium flex items-center gap-1 mt-1">
+                        <FileText className="w-3 h-3 text-purple-700" />
+                        <span>
+                          PDF Rules Source: <strong>{report.uploadedPdfDoc.fileName}</strong> ({report.uploadedPdfDoc.totalRulesApplied} rules)
+                        </span>
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => setActiveTab('scanner')}

@@ -5,6 +5,7 @@ import BrandGuidelines from './BrandGuidelines';
 import ApprovedFacts from './ApprovedFacts';
 import Terminology from './Terminology';
 import BrandAssets from './BrandAssets';
+import PdfBrandUpload from './PdfBrandUpload';
 import Footer from './Footer';
 
 export default function BrandKit({
@@ -14,6 +15,8 @@ export default function BrandKit({
   setActiveTab,
   showHero = true,
   showLocalTabs = true,
+  onNavigateToAudit,
+  pushToast,
 }) {
   const resolvedSection = activeSection !== undefined ? activeSection : activeTab;
   const resolvedOnChange = onSectionChange || setActiveTab;
@@ -23,8 +26,9 @@ export default function BrandKit({
 
   const sectionTabs = [
     { id: 'all', label: 'All Knowledge' },
+    { id: 'pdf-guidelines', label: '📄 PDF Guidelines' },
+    { id: 'guidelines', label: 'Guidelines Registry' },
     { id: 'profile', label: 'Company Profile' },
-    { id: 'guidelines', label: 'Guidelines' },
     { id: 'facts', label: 'Approved Facts' },
     { id: 'terminology', label: 'Terminology' },
     { id: 'assets', label: 'Brand Assets' },
@@ -60,25 +64,33 @@ export default function BrandKit({
       {currentSection === 'all' && (
         <>
           {showHero && <HeroBanner onSelectSection={handleSectionSelect} />}
+          <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
           <CompanyProfile />
-          <BrandGuidelines />
+          <BrandGuidelines onOpenPdfUpload={() => handleSectionSelect('pdf-guidelines')} />
           <ApprovedFacts />
           <Terminology />
           <BrandAssets />
         </>
       )}
 
+      {/* Dedicated PDF Guidelines Upload & Search */}
+      {currentSection === 'pdf-guidelines' && (
+        <div className="pt-2">
+          <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
+        </div>
+      )}
+
+      {/* Guidelines Registry */}
+      {currentSection === 'guidelines' && (
+        <div className="pt-4">
+          <BrandGuidelines onOpenPdfUpload={() => handleSectionSelect('pdf-guidelines')} />
+        </div>
+      )}
+
       {/* Individual Focused Sections */}
       {currentSection === 'profile' && (
         <div className="pt-4">
           <CompanyProfile />
-        </div>
-      )}
-
-      {/* Guidelines */}
-      {currentSection === 'guidelines' && (
-        <div className="pt-4">
-          <BrandGuidelines />
         </div>
       )}
 
