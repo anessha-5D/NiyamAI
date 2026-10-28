@@ -307,6 +307,8 @@ export default function App() {
           <BrandKit
             showHero={true}
             showLocalTabs={true}
+            onNavigateToAudit={() => setActiveModule('text-audit')}
+            pushToast={pushToast}
           />
         </main>
       )}
@@ -319,6 +321,7 @@ export default function App() {
               handleCreateCorrectionRecord(rec);
               setActiveModule('corrections');
             }}
+            onNavigateToPdfUpload={() => setActiveModule('brand-kit')}
             pushToast={pushToast}
           />
         </main>

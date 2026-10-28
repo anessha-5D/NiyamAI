@@ -25,7 +25,7 @@ import {
 } from '../services/brandDataService';
 import Modal from './Modal';
 
-export default function BrandGuidelines() {
+export default function BrandGuidelines({ onOpenPdfUpload }) {
   const [guidelines, setGuidelines] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -255,6 +255,16 @@ export default function BrandGuidelines() {
 
         {/* Action Buttons */}
         <div className="flex items-center space-x-2 self-start md:self-auto">
+          {onOpenPdfUpload && (
+            <button
+              onClick={onOpenPdfUpload}
+              title="Upload PDF brand manual to extract rules"
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2.5 rounded-full bg-pastel-butter text-wine-950 hover:bg-amber-200 border border-amber-300 text-xs font-semibold shadow-xs transition-colors"
+            >
+              <span>📄 Upload PDF</span>
+            </button>
+          )}
+
           <button
             onClick={handleResetToDefault}
             title="Restore original predefined sample guidelines"

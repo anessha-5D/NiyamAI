@@ -9,7 +9,8 @@ import {
   Send,
   RotateCcw,
   Activity,
-  Layers
+  Layers,
+  FileText
 } from 'lucide-react';
 import {
   runContentAudit,
@@ -18,10 +19,13 @@ import {
   type AuditChannel,
   type AuditFinding
 } from '../services/auditApi';
+import { getUploadedBrandDocument } from '../services/pdfBrandService';
+import type { UploadedBrandDocument } from '../types/brandPdf';
 import type { CorrectionRecord } from '../types';
 
 interface TextAuditProps {
   onSendToCorrectionWorkspace?: (record: Omit<CorrectionRecord, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onNavigateToPdfUpload?: () => void;
   pushToast?: (msg: string, type: 'info' | 'success' | 'warning' | 'error') => void;
 }
 
@@ -30,6 +34,11 @@ const SAMPLE_PROMPTS = [
     title: 'Ad Headline (Overpromising & Prohibited)',
     channel: 'ads' as AuditChannel,
     text: 'Our cheap workflow software guarantees 100% uptime and 100% bug-free automation with a miracle fix that will crush the competition!'
+  },
+  {
+    title: 'Brand Guidelines Test (SLA & Disclaimers)',
+    channel: 'ads' as AuditChannel,
+    text: 'NovaTech announces guaranteed 100% uptime and cheap automation that will crush the competition without any disclaimers.'
   },
   {
     title: 'Social Media Caption (Sensationalist)',
@@ -43,7 +52,7 @@ const SAMPLE_PROMPTS = [
   }
 ];
 
-export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditProps) {
+export function TextAudit({ onSendToCorrectionWorkspace, onNavigateToPdfUpload, pushToast }: TextAuditProps) {
   const [inputText, setInputText] = useState(SAMPLE_PROMPTS[0].text);
   const [channel, setChannel] = useState<AuditChannel>('ads');
   const [loading, setLoading] = useState(false);
@@ -51,10 +60,20 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
   const [backendStatus, setBackendStatus] = useState<{ online: boolean; engineMode?: string }>({ online: false });
   const [sentFindingIds, setSentFindingIds] = useState<Record<string, boolean>>({});
 
+  // Active Uploaded PDF Brand Document state
+  const [uploadedDoc, setUploadedDoc] = useState<UploadedBrandDocument | null>(null);
+  const [useUploadedDoc, setUseUploadedDoc] = useState(true);
+
   useEffect(() => {
     checkAuditHealth().then(status => {
       setBackendStatus(status);
     });
+
+    // Check for stored uploaded brand document
+    const doc = getUploadedBrandDocument();
+    if (doc) {
+      setUploadedDoc(doc);
+    }
   }, []);
 
   const handleRunAudit = async () => {
@@ -64,7 +83,8 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
     }
     setLoading(true);
     try {
-      const res = await runContentAudit(inputText, channel);
+      const docToUse = useUploadedDoc ? uploadedDoc : null;
+      const res = await runContentAudit(inputText, channel, docToUse);
       setReport(res);
       setSentFindingIds({});
       if (res.findings.length > 0) {
@@ -82,17 +102,23 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
   const handleSendToWorkspace = (finding: AuditFinding) => {
     if (!onSendToCorrectionWorkspace) return;
 
+    const isPdfRule = finding.source === 'pdf_guideline';
+
     onSendToCorrectionWorkspace({
       contentTitle: `${channel.toUpperCase()} Draft — ${finding.matchedText}`,
       contentType: channel === 'ads' ? 'ad-copy' : channel === 'social' ? 'social-media' : 'website',
       originalContent: inputText,
-      detectedIssue: finding.explanation.split('.')[0] || 'Brand Guideline Violation',
+      detectedIssue: finding.explanation.split('.')[0] || (isPdfRule ? 'PDF Guideline Violation' : 'Brand Guideline Violation'),
       issueExplanation: finding.explanation,
       severity: finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'high' : 'medium',
       guidelineRef: {
         id: finding.ruleId || 'GL-AUDIT',
-        title: finding.category.replace('_', ' ').toUpperCase(),
-        section: finding.ruleId
+        title: isPdfRule
+          ? `PDF Guideline: ${finding.category.replace('_', ' ').toUpperCase()}`
+          : finding.category.replace('_', ' ').toUpperCase(),
+        section: finding.pageNumber
+          ? `Page ${finding.pageNumber} (${finding.pdfSource || 'Uploaded PDF'})`
+          : finding.ruleId
       },
       aiSuggestion: {
         suggestedText: inputText.replace(finding.matchedText, finding.recommendedCorrection),
@@ -136,6 +162,62 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
             </div>
             <span className="text-[11px] text-wine-300">Target Brand: NovaTech Workflow Software</span>
           </div>
+        </div>
+      </div>
+
+      {/* Governance Source Card (Requirement 4) */}
+      <div className="bg-white rounded-2xl border border-cream-300 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-wine-900 text-white flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 text-pastel-butter" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-wine-950">
+                {uploadedDoc && useUploadedDoc
+                  ? `Active Audit Source: ${uploadedDoc.fileName}`
+                  : 'Active Audit Source: NovaTech Built-in Rules'}
+              </span>
+              {uploadedDoc && (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                  useUploadedDoc
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                    : 'bg-cream-200 text-ink-muted border border-cream-300'
+                }`}>
+                  {useUploadedDoc ? `${uploadedDoc.summary.totalRules} PDF Rules Active` : 'PDF Rules Paused'}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-ink-muted mt-0.5">
+              {uploadedDoc && useUploadedDoc
+                ? `Auditing draft content against both uploaded PDF rules (${uploadedDoc.fileName}) and certified built-in standards.`
+                : 'Auditing draft content against predefined NovaTech SLA facts, prohibited terminology, and channel voice.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto">
+          {uploadedDoc && (
+            <button
+              onClick={() => setUseUploadedDoc(!useUploadedDoc)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                useUploadedDoc
+                  ? 'bg-wine-900 text-white border-wine-900 shadow-2xs'
+                  : 'bg-cream-100 text-ink-secondary border-cream-300 hover:bg-cream-200'
+              }`}
+            >
+              {useUploadedDoc ? '✓ PDF Rules Included' : '+ Enable PDF Rules'}
+            </button>
+          )}
+
+          {onNavigateToPdfUpload && (
+            <button
+              onClick={onNavigateToPdfUpload}
+              className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cream-100 hover:bg-cream-200 text-ink-primary border border-cream-300 transition"
+            >
+              {uploadedDoc ? 'Manage PDF Guidelines →' : '📄 Upload PDF Guidelines →'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -207,7 +289,9 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
             <div className="mt-4 pt-3 border-t border-cream-200 flex items-center justify-between">
               <div className="text-xs text-ink-muted flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-wine-800" />
-                <span>Checks against 11 prohibited patterns, SLA facts & channel tone</span>
+                <span>
+                  Checks against {uploadedDoc && useUploadedDoc ? `${uploadedDoc.summary.totalRules} PDF rules + built-in rules` : '11 prohibited patterns, SLA facts & channel tone'}
+                </span>
               </div>
               <button
                 onClick={handleRunAudit}
@@ -273,7 +357,7 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                   </strong>
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-b border-cream-100">
-                  <span className="text-ink-secondary">Factual Accuracy (SLA & SOC-2):</span>
+                  <span className="text-ink-secondary">Factual Accuracy (SLA & Facts):</span>
                   <strong className={`font-mono ${report.score.categoryScores.factualAccuracy.score < 80 ? 'text-rose-700' : 'text-emerald-700'}`}>
                     {report.score.categoryScores.factualAccuracy.score}%
                   </strong>
@@ -309,7 +393,7 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
               </div>
               <h3 className="text-sm font-bold text-ink-primary">Audit Results Pending</h3>
               <p className="text-xs text-ink-muted mt-1 leading-relaxed">
-                Click &quot;Run AI Text Audit&quot; on the left to inspect copy against enterprise brand rules, verified SLA facts, and tone guidelines.
+                Click &quot;Run AI Text Audit&quot; on the left to inspect copy against enterprise brand rules, verified SLA facts, and uploaded PDF guidelines.
               </p>
             </div>
           )}
@@ -335,17 +419,23 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
               <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto" />
               <h4 className="text-sm font-bold text-ink-primary">Zero Violations Found!</h4>
               <p className="text-xs text-ink-muted max-w-md mx-auto">
-                This copy strictly adheres to NovaTech guidelines, approved 99.9% uptime SLA commitments, and enterprise vocabulary.
+                This copy strictly adheres to brand guidelines, approved 99.9% uptime SLA commitments, and enterprise vocabulary.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {report.findings.map(finding => {
                 const isSent = sentFindingIds[finding.id];
+                const isPdfRule = finding.source === 'pdf_guideline';
+
                 return (
                   <div
                     key={finding.id}
-                    className="p-4 rounded-xl border border-cream-300 bg-cream-50/60 hover:bg-white transition space-y-2.5"
+                    className={`p-4 rounded-xl border transition space-y-2.5 ${
+                      isPdfRule
+                        ? 'border-purple-200 bg-purple-50/30 hover:bg-white'
+                        : 'border-cream-300 bg-cream-50/60 hover:bg-white'
+                    }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center space-x-2">
@@ -356,6 +446,19 @@ export function TextAudit({ onSendToCorrectionWorkspace, pushToast }: TextAuditP
                         }`}>
                           {finding.severity}
                         </span>
+
+                        {/* Provenance Badge (Requirement 4) */}
+                        {isPdfRule ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1">
+                            <span>📄 PDF Rule</span>
+                            {finding.pageNumber && <span>(p. {finding.pageNumber})</span>}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cream-200 text-ink-secondary border border-cream-300">
+                            Built-in Rule
+                          </span>
+                        )}
+
                         <span className="text-xs font-semibold text-ink-primary">
                           Found: <code className="bg-rose-100/80 text-rose-900 px-1.5 py-0.5 rounded font-mono text-xs">&quot;{finding.matchedText}&quot;</code>
                         </span>
