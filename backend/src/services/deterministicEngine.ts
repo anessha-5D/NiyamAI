@@ -27,7 +27,7 @@ export interface DeterministicAuditResult {
 export class DeterministicRuleEngine {
   constructor(private config: BrandProfileConfig) {}
 
-  public audit(text: string, channel: AuditChannel): DeterministicAuditResult {
+  public audit(text: string, channel: AuditChannel, uploadedDoc?: any): DeterministicAuditResult {
     const findings: Finding[] = [];
     const passedChecks: string[] = [];
 
@@ -35,7 +35,53 @@ export class DeterministicRuleEngine {
       return { findings: [], passedChecks: [] };
     }
 
-    // 1. Prohibited Terminology Checks
+    // 1. Uploaded PDF Brand Guidelines Checks (Prioritized over generic built-in rules)
+    if (uploadedDoc && Array.isArray(uploadedDoc.guidelines)) {
+      const docName = uploadedDoc.fileName || 'Uploaded Brand Document';
+
+      for (let i = 0; i < uploadedDoc.guidelines.length; i++) {
+        const rule = uploadedDoc.guidelines[i];
+
+        // A. Prohibited claims from PDF
+        if (rule.category === 'prohibited_claims' && Array.isArray(rule.prohibitedTerms)) {
+          for (const term of rule.prohibitedTerms) {
+            if (!term || term.length < 2) continue;
+            const termRegex = createWordOrPhraseRegex(term);
+            let match: RegExpExecArray | null;
+
+            while ((match = termRegex.exec(text)) !== null) {
+              const matchedText = match[0];
+              const startIndex = match.index;
+              const endIndex = startIndex + matchedText.length;
+
+              const isDuplicate = findings.some(
+                f => f.startIndex === startIndex && f.endIndex === endIndex
+              );
+
+              if (!isDuplicate) {
+                findings.push({
+                  id: `det-pdf-proh-${rule.id}-${startIndex}`,
+                  category: 'prohibited_term',
+                  severity: rule.severity === 'Strict' ? 'critical' : 'high',
+                  matchedText,
+                  startIndex,
+                  endIndex,
+                  explanation: `[PDF: ${docName} (p. ${rule.pageNumber || 1})] ${rule.ruleText || rule.title}`,
+                  recommendedCorrection: rule.suggestedReplacement || 'compliant phrasing',
+                  confidence: 99,
+                  ruleId: rule.id,
+                  source: 'pdf_guideline',
+                  pageNumber: rule.pageNumber,
+                  pdfSource: docName
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Built-in Prohibited Terminology Checks
     let prohibitedViolations = 0;
     for (const rule of this.config.prohibitedTerms) {
       const regex = createWordOrPhraseRegex(rule.term);
@@ -49,9 +95,9 @@ export class DeterministicRuleEngine {
         const startIndex = match.index;
         const endIndex = startIndex + matchedText.length;
 
-        // Check if already covered by an identical finding
+        // Check if already covered by an identical finding (e.g. from uploaded PDF)
         const isDuplicate = findings.some(
-          f => f.startIndex === startIndex && f.endIndex === endIndex && f.ruleId === rule.id
+          f => f.startIndex === startIndex && f.endIndex === endIndex
         );
 
         if (!isDuplicate) {
@@ -76,7 +122,7 @@ export class DeterministicRuleEngine {
       }
     }
 
-    // 2. Preferred Terminology Checks
+    // 3. Preferred Terminology Checks
     for (const pref of this.config.preferredTerminology) {
       for (const alt of pref.alternatives) {
         const regex = createWordOrPhraseRegex(alt);
@@ -111,7 +157,7 @@ export class DeterministicRuleEngine {
       }
     }
 
-    // 3. Deterministic Fact Contradiction Checks
+    // 4. Deterministic Fact Contradiction Checks
     let contradictionViolations = 0;
     if (this.config.claimRules?.contradictions) {
       for (let i = 0; i < this.config.claimRules.contradictions.length; i++) {
@@ -154,7 +200,7 @@ export class DeterministicRuleEngine {
       }
     }
 
-    // 4. Deterministic Unsupported Claims Checks
+    // 5. Deterministic Unsupported Claims Checks
     if (this.config.claimRules?.unsupportedPatterns) {
       for (let i = 0; i < this.config.claimRules.unsupportedPatterns.length; i++) {
         const rule = this.config.claimRules.unsupportedPatterns[i];
@@ -189,7 +235,41 @@ export class DeterministicRuleEngine {
       }
     }
 
-    // 5. Channel-specific checks (e.g. Ads length or hashtag warnings)
+    // 6. Deterministic Tone & Voice Checks
+    if (this.config.toneGuidelines?.toneRules) {
+      for (const rule of this.config.toneGuidelines.toneRules) {
+        const regex = new RegExp(rule.pattern, 'gi');
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(text)) !== null) {
+          const matchedText = match[0];
+          const startIndex = match.index;
+          const endIndex = startIndex + matchedText.length;
+
+          const isDuplicate = findings.some(
+            f => f.startIndex === startIndex && f.endIndex === endIndex
+          );
+
+          if (!isDuplicate) {
+            findings.push({
+              id: `det-tone-${rule.id}-${startIndex}`,
+              category: rule.category || 'tone_mismatch',
+              severity: rule.severity,
+              matchedText,
+              startIndex,
+              endIndex,
+              explanation: rule.explanation,
+              recommendedCorrection: rule.replacement,
+              confidence: 92,
+              ruleId: rule.id,
+              source: 'deterministic'
+            });
+          }
+        }
+      }
+    }
+
+    // 7. Channel-specific checks (e.g. Ads length or hashtag warnings)
     if (channel === 'ads' && text.length > 500) {
       findings.push({
         id: `det-chan-ads-len`,
@@ -231,6 +311,18 @@ export class DeterministicRuleEngine {
     }
     if (contradicts.includes('FACT-005')) {
       return 'over 10,000 active teams';
+    }
+    if (contradicts.includes('GOVERN')) {
+      return 'Adhere strictly to official NovaTech brand guidelines, messaging frameworks, and visual standards';
+    }
+    if (contradicts.includes('DESIGN')) {
+      return 'Use approved brand colors (Burgundy, Cream, Ink) and designated brand typography';
+    }
+    if (contradicts.includes('LOGO')) {
+      return 'Always use the official, approved NovaTech logo asset without alteration';
+    }
+    if (contradicts.includes('AUDIENCE')) {
+      return 'target audience is modern teams, enterprise organizations, and growing businesses';
     }
     return 'approved company specification';
   }

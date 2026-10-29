@@ -92,15 +92,16 @@ export class ScoringService {
       violationsCount: dedupedFindings.filter(
         f => f.category === 'tone_mismatch' || f.category === 'channel_guidance'
       ).length,
-      summary: isDeterministicOnly
-        ? 'Evaluated via deterministic baseline heuristics (Gemini AI contextual tone analysis offline).'
-        : toneScoreVal === 100
-        ? 'Voice matches NovaTech professional and friendly tone.'
-        : `${toneDeductions} points deducted for tone calibration and style issues.`
+      summary:
+        toneScoreVal === 100
+          ? isDeterministicOnly
+            ? 'Evaluated via deterministic baseline heuristics (Gemini AI contextual tone analysis offline).'
+            : 'Voice matches NovaTech professional and friendly tone.'
+          : `${toneDeductions} points deducted for tone calibration and style issues.`
     };
 
     // 4. Overall Weighted Score: 35% Terminology + 35% Facts + 30% Tone
-    const overallScore = Math.max(
+    let overallScore = Math.max(
       0,
       Math.min(
         100,
@@ -108,7 +109,26 @@ export class ScoringService {
       )
     );
 
-    // 5. Letter Grade and Status
+    // 5. Multi-violation scaling and cumulative penalty checks
+    const criticalCount = dedupedFindings.filter(f => f.severity === 'critical').length;
+    const highCount = dedupedFindings.filter(f => f.severity === 'high').length;
+    const totalDeductionPoints = deductions.reduce((sum, d) => sum + d.pointsDeducted, 0);
+
+    // Cap overall score when severe multi-violations are detected
+    if (criticalCount >= 2) {
+      overallScore = Math.min(overallScore, 40);
+    } else if (criticalCount >= 1 && highCount >= 2) {
+      overallScore = Math.min(overallScore, 45);
+    } else if (highCount >= 4) {
+      overallScore = Math.min(overallScore, 45);
+    }
+
+    // If cumulative deductions across all categories exceed 60 points, scale down overall score
+    if (totalDeductionPoints >= 60) {
+      overallScore = Math.min(overallScore, Math.max(0, 100 - Math.round(totalDeductionPoints * 0.75)));
+    }
+
+    // 6. Letter Grade and Status
     let grade: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
     let status: 'compliant' | 'needs_attention' | 'non_compliant' = 'non_compliant';
 
@@ -130,7 +150,7 @@ export class ScoringService {
     }
 
     const scoringFormula =
-      'OverallScore = round(Terminology(35%) + FactualAccuracy(35%) + ToneVoice(30%)) where each category starts at 100 minus severity deductions (Critical: -25, High: -15, Medium: -8, Low: -4).';
+      'OverallScore = round(Terminology(35%) + FactualAccuracy(35%) + ToneVoice(30%)) where each category starts at 100 minus severity deductions (Critical: -25, High: -15, Medium: -8, Low: -4) with cumulative severity scaling for multi-violation content.';
 
     return {
       overallScore,

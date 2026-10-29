@@ -10,7 +10,8 @@ export const AuditRequestSchema = z.object({
     .enum(['ads', 'social', 'emails', 'blogs', 'product_specs'], {
       invalid_type_error: 'Channel must be one of: ads, social, emails, blogs, product_specs.'
     })
-    .default('blogs')
+    .default('blogs'),
+  uploadedDoc: z.any().optional()
 });
 
 export const SingleCorrectionSchema = z.object({

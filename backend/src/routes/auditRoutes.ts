@@ -12,13 +12,27 @@ const correctionService = new CorrectionService();
 const geminiService = new GeminiAuditService();
 
 /**
+ * GET /api/health
+ * Returns system health and engine configuration status.
+ */
+auditRouter.get('/health', (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: 'healthy',
+    module: 'NiyamAI-Text_Audit',
+    timestamp: new Date().toISOString(),
+    engineMode: process.env.GEMINI_API_KEY ? 'hybrid' : 'deterministic-only',
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY)
+  });
+});
+
+/**
  * POST /api/audit
  * Primary audit endpoint accepting content draft and channel.
  */
 auditRouter.post('/audit', validateAuditRequest, async (req: Request, res: Response) => {
   try {
-    const { text, channel } = req.body;
-    const report = await orchestrator.runAudit(text, channel);
+    const { text, channel, uploadedDoc } = req.body;
+    const report = await orchestrator.runAudit(text, channel, uploadedDoc);
     return res.status(200).json(report);
   } catch (err: any) {
     console.error('Unhandled error in /api/audit:', err);
@@ -58,31 +72,32 @@ auditRouter.post('/config/reload', (req: Request, res: Response) => {
 
 /**
  * POST /api/correction/apply-single
- * Test or apply a single finding's correction to a text snippet.
+ * Applies a single selected correction and returns updated draft.
  */
 auditRouter.post('/correction/apply-single', (req: Request, res: Response) => {
-  const parsed = SingleCorrectionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid correction payload', details: parsed.error.format() });
+  const parseResult = SingleCorrectionSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({
+      error: 'Invalid correction payload',
+      details: parseResult.error.errors.map(e => e.message).join('; ')
+    });
   }
 
-  const { text, finding } = parsed.data;
+  const { text, finding } = parseResult.data;
   const updatedText = correctionService.applySingleCorrection(text, finding as any);
   return res.status(200).json({ updatedText });
 });
 
 /**
- * GET /api/health
- * Health check & engine status.
+ * POST /api/correction/apply-all
+ * Applies all accepted findings and produces fully remediated copy.
  */
-auditRouter.get('/health', (req: Request, res: Response) => {
-  const isGeminiAvailable = geminiService.isConfigured();
-  return res.status(200).json({
-    status: 'healthy',
-    module: 'NiyamAI-Text_Audit',
-    timestamp: new Date().toISOString(),
-    engineMode: isGeminiAvailable ? 'hybrid (Gemini + Rules)' : 'deterministic-only (Rules only)',
-    geminiConfigured: isGeminiAvailable,
-    version: '1.0.0'
-  });
+auditRouter.post('/correction/apply-all', (req: Request, res: Response) => {
+  const { text, findings, suggestedRewrite } = req.body;
+  if (!text || !Array.isArray(findings)) {
+    return res.status(400).json({ error: 'text (string) and findings (array) are required' });
+  }
+
+  const updatedText = correctionService.applyAllCorrections(text, findings, suggestedRewrite);
+  return res.status(200).json({ updatedText });
 });

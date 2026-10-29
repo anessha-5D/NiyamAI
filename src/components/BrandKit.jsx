@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import HeroBanner from './HeroBanner';
 import CompanyProfile from './CompanyProfile';
 import BrandGuidelines from './BrandGuidelines';
@@ -10,7 +10,7 @@ import Footer from './Footer';
 
 export default function BrandKit({
   activeSection,
-  activeTab = 'all',
+  activeTab = 'profile',
   onSectionChange,
   setActiveTab,
   showHero = true,
@@ -20,15 +20,41 @@ export default function BrandKit({
 }) {
   const resolvedSection = activeSection !== undefined ? activeSection : activeTab;
   const resolvedOnChange = onSectionChange || setActiveTab;
-  const [internalSection, setInternalSection] = useState(resolvedSection);
-  const currentSection = resolvedOnChange ? resolvedSection : internalSection;
-  const handleSectionSelect = resolvedOnChange || setInternalSection;
+
+  const validTabIds = ['profile', 'guidelines', 'pdf-guidelines', 'facts', 'terminology', 'assets'];
+
+  // Default to 'profile' (Company Profile) if section is unspecified, invalid, or 'all'
+  const initialSection = resolvedSection && validTabIds.includes(resolvedSection)
+    ? resolvedSection
+    : 'profile';
+
+  const [internalSection, setInternalSection] = useState(initialSection);
+
+  useEffect(() => {
+    if (resolvedSection) {
+      if (validTabIds.includes(resolvedSection)) {
+        setInternalSection(resolvedSection);
+      } else {
+        setInternalSection('profile');
+      }
+    }
+  }, [resolvedSection]);
+
+  const rawSection = resolvedOnChange && activeSection !== undefined ? activeSection : internalSection;
+  const activeTabId = validTabIds.includes(rawSection) ? rawSection : 'profile';
+
+  const handleSectionSelect = (sectionId) => {
+    const targetSection = validTabIds.includes(sectionId) ? sectionId : 'profile';
+    setInternalSection(targetSection);
+    if (resolvedOnChange) {
+      resolvedOnChange(targetSection);
+    }
+  };
 
   const sectionTabs = [
-    { id: 'all', label: 'All Knowledge' },
-    { id: 'pdf-guidelines', label: '📄 PDF Guidelines' },
-    { id: 'guidelines', label: 'Guidelines Registry' },
     { id: 'profile', label: 'Company Profile' },
+    { id: 'guidelines', label: 'Guidelines Registry' },
+    { id: 'pdf-guidelines', label: 'PDF Guidelines' },
     { id: 'facts', label: 'Approved Facts' },
     { id: 'terminology', label: 'Terminology' },
     { id: 'assets', label: 'Brand Assets' },
@@ -36,17 +62,27 @@ export default function BrandKit({
 
   return (
     <div className="w-full bg-[#FAF7F2] text-ink-primary font-sans">
-      {/* Optional Embedded Section Tabs */}
+      {/* Landing Hero Section placed above the horizontal tabs */}
+      {showHero && <HeroBanner onSelectSection={handleSectionSelect} />}
+
+      {/* Horizontal Tabs at the top of the Brand Kit content */}
       {showLocalTabs && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-          <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 no-scrollbar border-b border-cream-300">
+          <div
+            role="tablist"
+            aria-label="Brand Kit Sections"
+            className="flex items-center space-x-2 overflow-x-auto pb-2 no-scrollbar border-b border-cream-300"
+          >
             {sectionTabs.map((tab) => {
-              const isActive = currentSection === tab.id;
+              const isActive = activeTabId === tab.id;
               return (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
                   onClick={() => handleSectionSelect(tab.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  type="button"
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
                       ? 'bg-wine-900 text-white shadow-sm'
                       : 'bg-white/80 text-ink-secondary hover:text-wine-950 hover:bg-white border border-cream-300'
@@ -60,60 +96,19 @@ export default function BrandKit({
         </div>
       )}
 
-      {/* 'all': Complete cohesive view matching reference video layout */}
-      {currentSection === 'all' && (
-        <>
-          {showHero && <HeroBanner onSelectSection={handleSectionSelect} />}
-          <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
-          <CompanyProfile />
+      {/* Content Area - Render only the currently selected tab */}
+      <div className="pt-2">
+        {activeTabId === 'profile' && <CompanyProfile />}
+        {activeTabId === 'guidelines' && (
           <BrandGuidelines onOpenPdfUpload={() => handleSectionSelect('pdf-guidelines')} />
-          <ApprovedFacts />
-          <Terminology />
-          <BrandAssets />
-        </>
-      )}
-
-      {/* Dedicated PDF Guidelines Upload & Search */}
-      {currentSection === 'pdf-guidelines' && (
-        <div className="pt-2">
+        )}
+        {activeTabId === 'pdf-guidelines' && (
           <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
-        </div>
-      )}
-
-      {/* Guidelines Registry */}
-      {currentSection === 'guidelines' && (
-        <div className="pt-4">
-          <BrandGuidelines onOpenPdfUpload={() => handleSectionSelect('pdf-guidelines')} />
-        </div>
-      )}
-
-      {/* Individual Focused Sections */}
-      {currentSection === 'profile' && (
-        <div className="pt-4">
-          <CompanyProfile />
-        </div>
-      )}
-
-      {/* Facts */}
-      {currentSection === 'facts' && (
-        <div className="pt-4">
-          <ApprovedFacts />
-        </div>
-      )}
-
-      {/* Terminology */}
-      {currentSection === 'terminology' && (
-        <div className="pt-4">
-          <Terminology />
-        </div>
-      )}
-
-      {/* Assets */}
-      {currentSection === 'assets' && (
-        <div className="pt-4">
-          <BrandAssets />
-        </div>
-      )}
+        )}
+        {activeTabId === 'facts' && <ApprovedFacts />}
+        {activeTabId === 'terminology' && <Terminology />}
+        {activeTabId === 'assets' && <BrandAssets />}
+      </div>
 
       {/* Footer */}
       <Footer onSelectSection={handleSectionSelect} />

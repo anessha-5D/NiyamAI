@@ -8,7 +8,6 @@ import {
   Trash2,
   AlertCircle,
   ArrowRight,
-  Sparkles,
   RotateCcw,
   Check,
   AlertTriangle,
@@ -23,7 +22,6 @@ import {
   updateTerminology,
   deleteTerminology,
   resetTerminologyToDefault,
-  checkTerminologyCompliance,
 } from '../services/brandDataService';
 import Modal from './Modal';
 
@@ -42,10 +40,6 @@ export default function Terminology() {
 
   // Notifications
   const [toastMessage, setToastMessage] = useState('');
-
-  // Scanner state (Dictionary demonstration tool)
-  const [scannerText, setScannerText] = useState('');
-  const [scannerResult, setScannerResult] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -189,7 +183,6 @@ export default function Terminology() {
 
     setIsFormModalOpen(false);
     refreshData();
-    if (scannerText) handleScan(scannerText);
   };
 
   // Confirm Delete
@@ -199,7 +192,6 @@ export default function Terminology() {
     setIsDeleteModalOpen(false);
     setDeletingItem(null);
     refreshData();
-    if (scannerText) handleScan(scannerText);
     showToast('Terminology entry deleted.');
   };
 
@@ -208,25 +200,8 @@ export default function Terminology() {
     if (window.confirm('Reset terminology dictionary back to predefined NovaTech sample entries?')) {
       resetTerminologyToDefault();
       refreshData();
-      if (scannerText) handleScan(scannerText);
-      showToast('Restored predefined sample terminology.');
+        showToast('Restored predefined sample terminology.');
     }
-  };
-
-  // Scanner handler
-  const handleScan = (text) => {
-    setScannerText(text);
-    if (!text.trim()) {
-      setScannerResult(null);
-      return;
-    }
-    const result = checkTerminologyCompliance(text);
-    setScannerResult(result);
-  };
-
-  const loadSampleText = () => {
-    const sample = "Our platform offers guaranteed results with 100% success, making us No. 1 without evidence.";
-    handleScan(sample);
   };
 
   // Filtered terms
@@ -296,85 +271,6 @@ export default function Terminology() {
           <span>{toastMessage}</span>
         </div>
       )}
-
-      {/* Lexicon Scanner Tool Box (Helper Dictionary Scanner) */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-cream-300 shadow-sm mb-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-wine-800" />
-            <h3 className="text-base font-bold text-wine-950 font-display">
-              Brand Lexicon Scanner
-            </h3>
-          </div>
-          <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-            <button
-              onClick={loadSampleText}
-              className="text-xs font-semibold px-3 py-1 rounded-full bg-cream-100 text-wine-900 border border-cream-300 hover:bg-cream-200 transition-all"
-            >
-              Load Sample Text
-            </button>
-            {scannerText && (
-              <button
-                onClick={() => handleScan('')}
-                className="text-xs text-ink-muted hover:text-ink-primary"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-
-        <textarea
-          rows={2}
-          value={scannerText}
-          onChange={(e) => handleScan(e.target.value)}
-          placeholder="Paste or type sample copy to check against prohibited terminology rules..."
-          className="w-full p-3.5 rounded-2xl bg-cream-100/70 border border-cream-300 text-xs text-ink-primary focus:outline-none focus:border-wine-800 focus:bg-white transition-all placeholder:text-ink-muted"
-        />
-
-        {scannerResult && (
-          <div className="mt-3 pt-3 border-t border-cream-200">
-            {scannerResult.isCompliant ? (
-              <div className="flex items-center space-x-2 p-3 rounded-xl bg-pastel-sage/50 text-emerald-950 border border-emerald-300 text-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-800 flex-shrink-0" />
-                <span className="font-semibold">
-                  Brand Compliant: No prohibited terms found in this draft text.
-                </span>
-              </div>
-            ) : (
-              <div className="p-3.5 rounded-xl bg-pastel-rose/40 border border-rose-300 text-xs space-y-2.5">
-                <div className="flex items-center space-x-2 text-rose-900 font-bold">
-                  <AlertCircle className="w-4 h-4 text-rose-700 flex-shrink-0" />
-                  <span>
-                    Detected {scannerResult.matches.length} prohibited term(s) in your copy:
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {scannerResult.matches.map((m, idx) => (
-                    <div key={idx} className="bg-white/90 p-3 rounded-xl border border-rose-200 shadow-2xs">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="line-through font-bold text-rose-900">
-                          "{m.foundWord}"
-                        </span>
-                        <span className="text-[10px] font-mono text-rose-800 uppercase font-semibold">
-                          Prohibited
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-1.5 text-emerald-950 font-bold text-xs mt-1">
-                        <ArrowRight className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
-                        <span>Recommended: “{m.replacement}”</span>
-                      </div>
-                      <p className="text-[11px] text-ink-secondary mt-1">
-                        Why: {m.reason}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* Lexicon Search & Filter Tabs */}
       <div className="bg-white rounded-3xl p-5 border border-cream-300 shadow-sm mb-8">

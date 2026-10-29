@@ -178,42 +178,7 @@ function runClientFallbackAudit(
   const findings: AuditFinding[] = [];
   const lower = text.toLowerCase();
 
-  // 1. Built-in Prohibited terms check
-  const PROHIBITED = [
-    { term: 'cheap', rep: 'cost-effective', sev: 'high' as FindingSeverity, exp: "NovaTech is an enterprise-grade solution. 'Cheap' degrades brand perceived value." },
-    { term: '100% bug-free', rep: 'rigorously tested and stable', sev: 'critical' as FindingSeverity, exp: "Absolutist claims create legal warranties and are technically unverifiable." },
-    { term: 'guaranteed 100% uptime', rep: '99.9% uptime SLA', sev: 'critical' as FindingSeverity, exp: "Contradicts approved brand SLA: NovaTech Enterprise offers 99.9% uptime SLA, never 100%." },
-    { term: '100% uptime', rep: '99.9% uptime SLA', sev: 'critical' as FindingSeverity, exp: "Contradicts NovaTech's official 99.9% uptime SLA." },
-    { term: 'miracle fix', rep: 'comprehensive workflow solution', sev: 'high' as FindingSeverity, exp: "Hyperbolic claims undermine enterprise trust." },
-    { term: 'revolutionary hack', rep: 'proven optimization technique', sev: 'medium' as FindingSeverity, exp: "'Hack' connotes unstable workarounds or security vulnerabilities." },
-    { term: 'crush the competition', rep: "accelerate your team's productivity", sev: 'high' as FindingSeverity, exp: "Combative language conflicts with NovaTech's collaborative tone." },
-    { term: 'unlimited forever', rep: 'scalable capacity designed for enterprise growth', sev: 'critical' as FindingSeverity, exp: "Uncapped permanent commitments violate enterprise licensing standards." },
-    { term: 'military-grade', rep: 'enterprise-standard AES-256', sev: 'high' as FindingSeverity, exp: "Vague security hyperbole is discouraged by security compliance boards." },
-    { term: 'number one', rep: 'leading enterprise solution', sev: 'medium' as FindingSeverity, exp: "Superlative claims require third-party award or analyst report citation." },
-    { term: 'world\'s best', rep: 'industry-recognized platform', sev: 'medium' as FindingSeverity, exp: "Superlatives must be substantiated by third-party benchmark." }
-  ];
-
-  for (let i = 0; i < PROHIBITED.length; i++) {
-    const item = PROHIBITED[i];
-    const idx = lower.indexOf(item.term.toLowerCase());
-    if (idx !== -1) {
-      findings.push({
-        id: `local-find-${Date.now()}-${i}`,
-        category: item.sev === 'critical' ? 'fact_contradiction' : 'prohibited_term',
-        severity: item.sev,
-        matchedText: text.substring(idx, idx + item.term.length),
-        startIndex: idx,
-        endIndex: idx + item.term.length,
-        explanation: item.exp,
-        recommendedCorrection: item.rep,
-        confidence: 0.95,
-        ruleId: `RULE-DET-${i + 1}`,
-        source: 'deterministic'
-      });
-    }
-  }
-
-  // 2. Audit against Uploaded PDF Brand Guidelines if available
+  // 1. Audit against Uploaded PDF Brand Guidelines if available (prioritized)
   if (uploadedDoc && Array.isArray(uploadedDoc.guidelines)) {
     const docName = uploadedDoc.fileName || 'Uploaded Brand Document';
 
@@ -294,11 +259,199 @@ function runClientFallbackAudit(
     }
   }
 
-  // Compute deductions
-  let totalDeductions = 0;
-  const deductions = findings.map(f => {
-    const pts = f.severity === 'critical' ? 20 : f.severity === 'high' ? 12 : f.severity === 'medium' ? 6 : 2;
-    totalDeductions += pts;
+  // 2. Built-in Prohibited terms check
+  const PROHIBITED = [
+    { term: 'cheap', rep: 'cost-effective', sev: 'high' as FindingSeverity, exp: "NovaTech is an enterprise-grade solution. 'Cheap' degrades brand perceived value." },
+    { term: '100% bug-free', rep: 'rigorously tested and stable', sev: 'critical' as FindingSeverity, exp: "Absolutist claims create legal warranties and are technically unverifiable." },
+    { term: 'guaranteed 100% uptime', rep: '99.9% uptime SLA', sev: 'critical' as FindingSeverity, exp: "Contradicts approved brand SLA: NovaTech Enterprise offers 99.9% uptime SLA, never 100%." },
+    { term: '100% uptime', rep: '99.9% uptime SLA', sev: 'critical' as FindingSeverity, exp: "Contradicts NovaTech's official 99.9% uptime SLA." },
+    { term: 'miracle fix', rep: 'comprehensive workflow solution', sev: 'high' as FindingSeverity, exp: "Hyperbolic claims undermine enterprise trust." },
+    { term: 'revolutionary hack', rep: 'proven optimization technique', sev: 'medium' as FindingSeverity, exp: "'Hack' connotes unstable workarounds or security vulnerabilities." },
+    { term: 'crush the competition', rep: "accelerate your team's productivity", sev: 'high' as FindingSeverity, exp: "Combative language conflicts with NovaTech's collaborative tone." },
+    { term: 'unlimited forever', rep: 'scalable capacity designed for enterprise growth', sev: 'critical' as FindingSeverity, exp: "Uncapped permanent commitments violate enterprise licensing standards." },
+    { term: 'military-grade', rep: 'enterprise-standard AES-256', sev: 'high' as FindingSeverity, exp: "Vague security hyperbole is discouraged by security compliance boards." },
+    { term: 'number one', rep: 'a recognized leader in enterprise workflow management', sev: 'medium' as FindingSeverity, exp: "Superlative claims require third-party award or analyst report citation." },
+    { term: "world's best", rep: 'industry-recognized platform', sev: 'medium' as FindingSeverity, exp: "Superlatives must be substantiated by third-party benchmark." }
+  ];
+
+  for (let i = 0; i < PROHIBITED.length; i++) {
+    const item = PROHIBITED[i];
+    const idx = lower.indexOf(item.term.toLowerCase());
+    if (idx !== -1) {
+      const alreadyFound = findings.some(
+        f => f.startIndex === idx && f.endIndex === idx + item.term.length
+      );
+      if (!alreadyFound) {
+        findings.push({
+          id: `local-find-${Date.now()}-${i}`,
+          category: item.sev === 'critical' ? 'fact_contradiction' : 'prohibited_term',
+          severity: item.sev,
+          matchedText: text.substring(idx, idx + item.term.length),
+          startIndex: idx,
+          endIndex: idx + item.term.length,
+          explanation: item.exp,
+          recommendedCorrection: item.rep,
+          confidence: 0.95,
+          ruleId: `RULE-DET-${i + 1}`,
+          source: 'deterministic'
+        });
+      }
+    }
+  }
+
+  // 3. Built-in Pattern & Governance Checks (Contradictions, Unsupported Claims, Tone)
+  const EXTRA_CHECKS: Array<{
+    pattern: RegExp;
+    category: string;
+    severity: FindingSeverity;
+    exp: string;
+    rep: string;
+    ruleId: string;
+  }> = [
+    {
+      pattern: /(?:there\s+are\s+)?no\s+strict\s+rules(?:\s+for\s+(?:wording\s+or\s+design|wording|design|content|branding))?|no\s+rules\s+for\s+wording\s+or\s+design/gi,
+      category: 'fact_contradiction',
+      severity: 'critical',
+      exp: 'Direct contradiction of brand governance standards. Official wording and design guidelines are mandatory to ensure brand compliance and legal protection.',
+      rep: 'Adhere strictly to official NovaTech brand guidelines, messaging frameworks, and visual standards',
+      ruleId: 'RULE-CONTRA-GOVERN-001'
+    },
+    {
+      pattern: /use\s+any\s+(?:colors?\s+and\s+fonts?|colors?|fonts?|typography|styles?)(?:\s+you\s+like)?|any\s+colors?\s+and\s+fonts?/gi,
+      category: 'fact_contradiction',
+      severity: 'high',
+      exp: 'Contradicts NovaTech design standards. Marketing and product copy must adhere to official brand colors (Burgundy, Cream, Ink) and typography (Inter, Playfair Display).',
+      rep: 'Use approved brand colors (Burgundy, Cream, Ink) and designated brand typography',
+      ruleId: 'RULE-CONTRA-DESIGN-001'
+    },
+    {
+      pattern: /use\s+different\s+logos?(?:\s+whenever\s+needed)?|different\s+logos?\s+whenever\s+needed/gi,
+      category: 'fact_contradiction',
+      severity: 'high',
+      exp: 'Violates brand logo integrity guidelines. NovaTech brand marks must never be altered, substituted, or recolored ad-hoc.',
+      rep: 'Always use the official, approved NovaTech logo asset without alteration',
+      ruleId: 'RULE-CONTRA-LOGO-001'
+    },
+    {
+      pattern: /(?:our\s+)?target\s+audience\s+is\s+everyone|audience\s+is\s+(?:everyone|anyone|everybody)|targeting\s+everyone/gi,
+      category: 'fact_contradiction',
+      severity: 'high',
+      exp: "Contradicts official target audience ('Teams and businesses'). Defining target audience as 'everyone' dilutes enterprise positioning and market focus.",
+      rep: 'target audience is modern teams, enterprise organizations, and growing businesses',
+      ruleId: 'RULE-CONTRA-AUDIENCE-001'
+    },
+    {
+      pattern: /(?:the\s+)?best\s+(?:services?|software|platform|tools?|solutions?|products?)|best\s+in\s+the\s+market/gi,
+      category: 'unsupported_claim',
+      severity: 'high',
+      exp: "Unsubstantiated superlative ('best services') requires third-party benchmark verification or official customer satisfaction audit data.",
+      rep: 'a trusted workflow management solution',
+      ruleId: 'RULE-UNSUP-BEST-001'
+    },
+    {
+      pattern: /(?:our\s+)?tone\s+can\s+be\s+formal\s+or\s+casual(?:\s+depending\s+on\s+the\s+situation)?|formal\s+or\s+casual(?:\s+depending\s+on\s+the\s+situation)?/gi,
+      category: 'tone_mismatch',
+      severity: 'high',
+      exp: "Contradicts official brand voice policy. NovaTech's brand voice is consistently 'Professional and friendly' across all enterprise channels, never arbitrary or erratic.",
+      rep: 'maintain our signature professional, friendly, and approachable tone',
+      ruleId: 'RULE-TONE-001'
+    },
+    {
+      pattern: /(?:our\s+)?brand\s+is\s+good\s+and\s+modern|good\s+and\s+modern/gi,
+      category: 'tone_mismatch',
+      severity: 'medium',
+      exp: "Vague, generic brand description ('good and modern') lacks positioning clarity, audience value proposition, or product identity.",
+      rep: 'an intelligent workflow automation platform built for modern enterprise teams',
+      ruleId: 'RULE-TONE-VAGUE-001'
+    },
+    {
+      pattern: /whatever\s+works|do\s+whatever\s+you\s+want|anything\s+goes/gi,
+      category: 'tone_mismatch',
+      severity: 'high',
+      exp: 'Careless or colloquial framing diminishes professional brand trust and governance.',
+      rep: 'maintain consistent brand excellence and quality standards',
+      ruleId: 'RULE-TONE-COLLOQ-001'
+    }
+  ];
+
+  for (const check of EXTRA_CHECKS) {
+    let match: RegExpExecArray | null;
+    const regex = new RegExp(check.pattern.source, check.pattern.flags);
+    while ((match = regex.exec(text)) !== null) {
+      const startIndex = match.index;
+      const matchedText = match[0];
+      const endIndex = startIndex + matchedText.length;
+
+      const alreadyFound = findings.some(
+        f => f.startIndex === startIndex && f.endIndex === endIndex
+      );
+
+      if (!alreadyFound) {
+        findings.push({
+          id: `local-extra-${check.ruleId}-${startIndex}`,
+          category: check.category,
+          severity: check.severity,
+          matchedText,
+          startIndex,
+          endIndex,
+          explanation: check.exp,
+          recommendedCorrection: check.rep,
+          confidence: 0.95,
+          ruleId: check.ruleId,
+          source: 'deterministic'
+        });
+      }
+    }
+  }
+
+  // Deduplicate overlapping findings
+  const severityRank: Record<FindingSeverity, number> = {
+    critical: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+    info: 0
+  };
+
+  const sortedFindings = [...findings].sort((a, b) => {
+    const diff = (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0);
+    if (diff !== 0) return diff;
+    return (b.endIndex - b.startIndex) - (a.endIndex - a.startIndex);
+  });
+
+  const dedupedFindings: AuditFinding[] = [];
+  for (const f of sortedFindings) {
+    const hasOverlap = dedupedFindings.some(
+      existing => Math.max(existing.startIndex, f.startIndex) < Math.min(existing.endIndex, f.endIndex)
+    );
+    if (!hasOverlap) {
+      dedupedFindings.push(f);
+    }
+  }
+  dedupedFindings.sort((a, b) => a.startIndex - b.startIndex);
+
+  // Compute deductions per category
+  const SEVERITY_WEIGHTS: Record<FindingSeverity, number> = {
+    critical: 25,
+    high: 15,
+    medium: 8,
+    low: 4,
+    info: 0
+  };
+
+  let termDeductions = 0;
+  let factDeductions = 0;
+  let toneDeductions = 0;
+
+  const deductions = dedupedFindings.map(f => {
+    const pts = SEVERITY_WEIGHTS[f.severity] || 0;
+    if (f.category === 'prohibited_term' || f.category === 'preferred_term') {
+      termDeductions += pts;
+    } else if (f.category === 'fact_contradiction' || f.category === 'unsupported_claim' || f.category === 'required_disclaimer') {
+      factDeductions += pts;
+    } else {
+      toneDeductions += pts;
+    }
     const prefix = f.source === 'pdf_guideline' ? `[PDF ${f.ruleId}]` : `[Built-in]`;
     return {
       id: f.id,
@@ -309,25 +462,70 @@ function runClientFallbackAudit(
     };
   });
 
-  const overallScore = Math.max(0, 100 - totalDeductions);
-  const grade: 'A' | 'B' | 'C' | 'D' | 'F' =
-    overallScore >= 90 ? 'A' : overallScore >= 80 ? 'B' : overallScore >= 70 ? 'C' : overallScore >= 60 ? 'D' : 'F';
+  const termScoreVal = Math.max(0, 100 - termDeductions);
+  const factScoreVal = Math.max(0, 100 - factDeductions);
+  const toneScoreVal = Math.max(0, 100 - toneDeductions);
+
+  let overallScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(termScoreVal * 0.35 + factScoreVal * 0.35 + toneScoreVal * 0.30)
+    )
+  );
+
+  const criticalCount = dedupedFindings.filter(f => f.severity === 'critical').length;
+  const highCount = dedupedFindings.filter(f => f.severity === 'high').length;
+  const totalDeductionPoints = deductions.reduce((sum, d) => sum + d.pointsDeducted, 0);
+
+  // Multi-violation scaling
+  if (criticalCount >= 2) {
+    overallScore = Math.min(overallScore, 40);
+  } else if (criticalCount >= 1 && highCount >= 2) {
+    overallScore = Math.min(overallScore, 45);
+  } else if (highCount >= 4) {
+    overallScore = Math.min(overallScore, 45);
+  }
+
+  if (totalDeductionPoints >= 60) {
+    overallScore = Math.min(overallScore, Math.max(0, 100 - Math.round(totalDeductionPoints * 0.75)));
+  }
+
+  let grade: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
+  let status: 'compliant' | 'needs_attention' | 'non_compliant' = 'non_compliant';
+
+  if (overallScore >= 90) {
+    grade = 'A';
+    status = 'compliant';
+  } else if (overallScore >= 75) {
+    grade = 'B';
+    status = 'compliant';
+  } else if (overallScore >= 60) {
+    grade = 'C';
+    status = 'needs_attention';
+  } else if (overallScore >= 45) {
+    grade = 'D';
+    status = 'needs_attention';
+  } else {
+    grade = 'F';
+    status = 'non_compliant';
+  }
 
   let corrected = text;
-  findings.forEach(f => {
+  dedupedFindings.forEach(f => {
     if (f.matchedText && f.recommendedCorrection && !f.recommendedCorrection.startsWith('Add required')) {
       corrected = corrected.replace(f.matchedText, f.recommendedCorrection);
     }
   });
 
   const passedChecks = [
-    "SOC-2 Type II Certification Reference Check: Passed",
-    "ISO 27001 Data Privacy Standard Check: Passed",
-    "Trial Period Attribution (14-day policy): Passed"
+    'SOC-2 Type II Certification Reference Check: Passed',
+    'ISO 27001 Data Privacy Standard Check: Passed',
+    'Trial Period Attribution (14-day policy): Passed'
   ];
 
   if (uploadedDoc) {
-    passedChecks.unshift(`[PDF: ${uploadedDoc.fileName}] Verified against ${uploadedDoc.summary.totalRules} extracted rules`);
+    passedChecks.unshift(`[PDF: ${uploadedDoc.fileName}] Verified against ${uploadedDoc.summary?.totalRules || uploadedDoc.guidelines?.length || 0} extracted rules`);
   }
 
   return {
@@ -336,60 +534,72 @@ function runClientFallbackAudit(
     inputText: text,
     channel,
     brand: {
-      name: uploadedDoc ? `NovaTech + ${uploadedDoc.fileName}` : "NovaTech",
-      tone: "Professional and friendly",
-      targetAudience: "Teams and businesses"
+      name: uploadedDoc ? `NovaTech + ${uploadedDoc.fileName}` : 'NovaTech',
+      tone: 'Professional and friendly',
+      targetAudience: 'Teams and businesses'
     },
     engineMode: 'deterministic-only',
     score: {
       overallScore,
       grade,
-      status: overallScore >= 85 ? 'compliant' : overallScore >= 70 ? 'needs_attention' : 'non_compliant',
-      scoringFormula: "100 - SUM(deductions)",
+      status,
+      scoringFormula:
+        'OverallScore = round(Terminology(35%) + FactualAccuracy(35%) + ToneVoice(30%)) where each category starts at 100 minus severity deductions (Critical: -25, High: -15, Medium: -8, Low: -4) with cumulative severity scaling for multi-violation content.',
       categoryScores: {
         terminology: {
           category: 'terminology',
           label: 'Brand Terminology',
-          score: Math.max(0, 100 - (findings.filter(f => f.category === 'prohibited_term').length * 15)),
-          status: findings.length === 0 ? 'pass' : 'warning',
-          violationsCount: findings.filter(f => f.category === 'prohibited_term').length,
-          summary: uploadedDoc ? `Checked against ${uploadedDoc.fileName} and built-in terminology.` : 'Checked against NovaTech approved brand vocabulary.'
+          score: termScoreVal,
+          status: termScoreVal >= 90 ? 'pass' : termScoreVal >= 70 ? 'warning' : 'fail',
+          violationsCount: dedupedFindings.filter(f => f.category === 'prohibited_term' || f.category === 'preferred_term').length,
+          summary:
+            termScoreVal === 100
+              ? uploadedDoc
+                ? `Checked against ${uploadedDoc.fileName} and built-in terminology.`
+                : 'Full alignment with approved vocabulary and prohibited terms.'
+              : `${termDeductions} points deducted across vocabulary and terminology checks.`
         },
         factualAccuracy: {
           category: 'factualAccuracy',
           label: 'Factual Accuracy & Claims',
-          score: Math.max(0, 100 - (findings.filter(f => f.category === 'fact_contradiction').length * 25)),
-          status: findings.filter(f => f.severity === 'critical').length === 0 ? 'pass' : 'fail',
-          violationsCount: findings.filter(f => f.category === 'fact_contradiction').length,
-          summary: 'Cross-checked against certified SLA & SOC-2 facts.'
+          score: factScoreVal,
+          status: factScoreVal >= 90 ? 'pass' : factScoreVal >= 70 ? 'warning' : 'fail',
+          violationsCount: dedupedFindings.filter(f => f.category === 'fact_contradiction' || f.category === 'unsupported_claim' || f.category === 'required_disclaimer').length,
+          summary:
+            factScoreVal === 100
+              ? 'Cross-checked against certified SLA & SOC-2 facts.'
+              : `${factDeductions} points deducted across claim verification checks.`
         },
         toneVoice: {
           category: 'toneVoice',
           label: 'Voice & Channel Tone',
-          score: 92,
-          status: 'pass',
-          violationsCount: 0,
-          summary: `Aligned with channel expectations for ${channel}.`
+          score: toneScoreVal,
+          status: toneScoreVal >= 90 ? 'pass' : toneScoreVal >= 70 ? 'warning' : 'fail',
+          violationsCount: dedupedFindings.filter(f => f.category === 'tone_mismatch' || f.category === 'channel_guidance').length,
+          summary:
+            toneScoreVal === 100
+              ? `Aligned with channel expectations for ${channel}.`
+              : `${toneDeductions} points deducted for tone calibration and style issues.`
         }
       },
       deductions,
       isDeterministicOnly: true
     },
-    findings,
+    findings: dedupedFindings,
     correctedText: corrected,
     passedChecks,
     summary: {
-      totalFindings: findings.length,
-      criticalCount: findings.filter(f => f.severity === 'critical').length,
-      highCount: findings.filter(f => f.severity === 'high').length,
-      mediumCount: findings.filter(f => f.severity === 'medium').length,
-      lowCount: findings.filter(f => f.severity === 'low').length,
+      totalFindings: dedupedFindings.length,
+      criticalCount: dedupedFindings.filter(f => f.severity === 'critical').length,
+      highCount: dedupedFindings.filter(f => f.severity === 'high').length,
+      mediumCount: dedupedFindings.filter(f => f.severity === 'medium').length,
+      lowCount: dedupedFindings.filter(f => f.severity === 'low').length,
       passedCount: passedChecks.length
     },
     executionTimeMs: Math.round(performance.now() - start),
     uploadedPdfDoc: uploadedDoc ? {
       fileName: uploadedDoc.fileName,
-      totalRulesApplied: uploadedDoc.summary.totalRules
+      totalRulesApplied: uploadedDoc.summary?.totalRules || uploadedDoc.guidelines?.length || 0
     } : undefined
   };
 }
