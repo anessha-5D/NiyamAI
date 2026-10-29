@@ -55,6 +55,9 @@
   <!-- Chart.js & Canvas Confetti (Local with CDN fallback) -->
   <script src="assets/vendor/chart.js"></script>
   <script src="assets/vendor/confetti.js"></script>
+  <!-- jsPDF & AutoTable for Summary Report Generation -->
+  <script src="assets/vendor/jspdf.umd.min.js"></script>
+  <script src="assets/vendor/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body class="min-h-screen flex flex-col bg-[#FAF7F5] text-[#211218]">
 
@@ -170,7 +173,7 @@
             <button onclick="switchTab('release-gate')" class="btn-pill-wine !bg-white !text-plum-950 hover:!bg-plum-50 !shadow-lg">
               Open Publishing Gate
             </button>
-            <button onclick="switchTab('governance-analytics')" class="btn-pill-outline !border-plum-600 !text-stone-200 hover:!bg-plum-800 hover:!text-white">
+            <button id="viewGovernanceAnalyticsBtn" class="btn-pill-outline !border-plum-600 !text-stone-200 hover:!bg-plum-800 hover:!text-white">
               View Governance Analytics →
             </button>
           </div>
@@ -284,7 +287,7 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
     
     <!-- Tab Navigation -->
-    <div class="flex flex-wrap items-center justify-between border-b border-[#E8DED8] pb-4 gap-4">
+    <div id="workspaceTabs" class="flex flex-wrap items-center justify-between border-b border-[#E8DED8] pb-4 gap-4">
       <div class="flex flex-wrap items-center gap-2 sm:gap-6">
         <button data-tab="release-gate" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-plum-850 text-plum-900 font-bold transition flex items-center gap-2">
           <svg class="w-4 h-4 text-plum-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -294,7 +297,7 @@
           <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Tamper-Evident Audit Trail
         </button>
-        <button data-tab="governance-analytics" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-transparent text-stone-500 font-medium hover:text-plum-900 transition flex items-center gap-2">
+        <button id="tab-governance-analytics" data-tab="governance-analytics" class="nav-tab-btn py-2 px-1 text-sm border-b-2 border-transparent text-stone-500 font-medium hover:text-plum-900 transition flex items-center gap-2">
           <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           Governance Analytics & Drift
         </button>
@@ -906,6 +909,6 @@
   <script src="assets/js/mockData.js"></script>
   <script src="assets/js/integrationAdapters.js"></script>
   <script src="assets/js/analyticsCharts.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js?v=governance_drift_v4"></script>
 </body>
 </html>

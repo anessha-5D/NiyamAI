@@ -150,6 +150,15 @@ function setupEventListeners() {
     });
   });
 
+  // View Governance Analytics Button in Hero Section
+  const viewGovBtn = document.getElementById('viewGovernanceAnalyticsBtn');
+  if (viewGovBtn) {
+    viewGovBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      viewGovernanceAnalytics();
+    });
+  }
+
   // Filter Buttons
   const filterBtns = document.querySelectorAll('.filter-btn');
   filterBtns.forEach(btn => {
@@ -203,7 +212,7 @@ function closeAllModals() {
 /**
  * Switch Active Workspace Tab
  */
-function switchTab(tabId) {
+function switchTab(tabId, autoScroll = false) {
   appState.activeTab = tabId;
   const tabContents = document.querySelectorAll('.tab-content-panel');
   tabContents.forEach(panel => panel.classList.add('hidden'));
@@ -225,15 +234,6 @@ function switchTab(tabId) {
     }
   });
 
-  // Smooth scroll to workspace container
-  const workspaceMain = document.querySelector('main');
-  if (workspaceMain) {
-    const topOffset = workspaceMain.getBoundingClientRect().top + window.scrollY - 80;
-    if (window.scrollY > topOffset) {
-      window.scrollTo({ top: topOffset, behavior: 'smooth' });
-    }
-  }
-
   // Re-trigger chart rendering if analytics tab is activated
   if (tabId === 'governance-analytics') {
     setTimeout(() => {
@@ -242,6 +242,30 @@ function switchTab(tabId) {
       }
     }, 60);
   }
+}
+
+let _isScrollingToAnalytics = false;
+function viewGovernanceAnalytics() {
+  if (_isScrollingToAnalytics) return;
+  _isScrollingToAnalytics = true;
+  setTimeout(() => { _isScrollingToAnalytics = false; }, 600);
+
+  // 1. Activate tab and render charts
+  switchTab('governance-analytics', false);
+
+  // 2. ONE scroll only: ask the parent React page to scroll
+  setTimeout(() => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'SCROLL_TO_GOVERNANCE_ANALYTICS' }, '*');
+    } else {
+      // Standalone mode (/member5.html opened directly)
+      const tabsElem = document.getElementById('workspaceTabs');
+      if (tabsElem) {
+        const topOffset = tabsElem.getBoundingClientRect().top + window.scrollY - 70;
+        window.scrollTo({ top: Math.max(0, topOffset), behavior: 'smooth' });
+      }
+    }
+  }, 120);
 }
 
 /**
@@ -1111,6 +1135,772 @@ function downloadAuditManifest() {
   } catch (err) {
     console.error('Failed to export manifest:', err);
     showToast("Failed to generate JSON manifest. Please try again.", "error");
+  }
+}
+
+/**
+ * Returns a consistent local YYYY-MM-DD date stamp (avoids UTC timezone date drift)
+ */
+function getLocalDateStamp(date = new Date()) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Draws the mini-running header on continuation pages
+ */
+function drawPageHeaderMini(doc, sectionTitle, reportId) {
+  const pWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  doc.setFillColor(51, 11, 24);
+  doc.rect(0, 0, pWidth, 14, 'F');
+
+  doc.setFillColor(212, 175, 55);
+  doc.rect(0, 13.5, pWidth, 0.5, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('NiyamAI Brand Governance Report', margin, 8.5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(232, 222, 216);
+  doc.text(sectionTitle, margin + 55, 8.5);
+
+  doc.setFont('courier', 'bold');
+  doc.setTextColor(212, 175, 55);
+  doc.text(`ID: ${reportId}`, pWidth - margin, 8.5, { align: 'right' });
+}
+
+/**
+ * Download Summary Report PDF (NiyamAI Brand Compliance Audit Report)
+ * High-fidelity, 3-page, landscape findings table, non-overlapping metadata
+ */
+function downloadSummaryReportPDF() {
+  try {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showToast("PDF engine is initializing, please try again in a moment.", "warning");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+
+    // Color Palette Constants matching NiyamAI Design System
+    const COLOR_BURGUNDY = [51, 11, 24];     // #330B18
+    const COLOR_PLUM = [78, 18, 39];         // #4E1227
+    const COLOR_GOLD = [212, 175, 55];       // Gold Accent
+    const COLOR_CREAM_BG = [250, 247, 245];  // #FAF7F5
+    const COLOR_BORDER = [234, 220, 213];    // Card Border
+    const COLOR_TEXT_DARK = [28, 6, 13];     // Text Primary
+    const COLOR_TEXT_MUTED = [102, 85, 92];  // Text Muted
+    const COLOR_EMERALD = [22, 101, 52];     // Compliant
+    const COLOR_ROSE = [185, 28, 28];        // Critical
+    const COLOR_AMBER = [194, 65, 12];       // High
+    const COLOR_YELLOW = [180, 83, 9];       // Medium
+    const COLOR_STONE = [115, 110, 105];     // Low
+
+    const margin = 14;
+    const portraitWidth = 210;
+    const contentWidth = portraitWidth - (margin * 2); // 182mm
+
+    // Retrieve live records from localStorage or appState
+    let liveRecords = [];
+    try {
+      const raw = localStorage.getItem('niyamai_correction_records');
+      if (raw) liveRecords = JSON.parse(raw);
+    } catch (e) {}
+
+    const selectedAsset = (typeof appState !== 'undefined' && appState.selectedAsset) ? appState.selectedAsset : null;
+    const totalCount = liveRecords.length;
+    const criticalCount = liveRecords.filter(r => r.severity === 'critical').length;
+    const highCount = liveRecords.filter(r => r.severity === 'high').length;
+    const mediumCount = liveRecords.filter(r => r.severity === 'medium').length;
+    const lowCount = liveRecords.filter(r => r.severity === 'low').length;
+
+    const approvedCount = liveRecords.filter(r => r.status === 'approved').length;
+    const acceptedCount = liveRecords.filter(r => r.status === 'correction-accepted').length;
+    const editedCount = liveRecords.filter(r => r.status === 'manually-edited').length;
+    const rejectedCount = liveRecords.filter(r => r.status === 'correction-rejected').length;
+    const pendingCount = liveRecords.filter(r => r.status === 'pending-approval').length;
+
+    const resolvedCount = approvedCount + acceptedCount + editedCount;
+    const unresolvedCount = totalCount - resolvedCount;
+    const unresolvedCriticalCount = liveRecords.filter(r => r.severity === 'critical' && r.status !== 'approved' && r.status !== 'correction-accepted').length;
+    const unresolvedHighCount = liveRecords.filter(r => r.severity === 'high' && r.status !== 'approved' && r.status !== 'correction-accepted').length;
+
+    // Dates
+    const now = new Date();
+    const dateStamp = getLocalDateStamp(now);
+    const generatedAt = now.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    const auditDate = generatedAt;
+    const reportId = `RPT-${dateStamp.replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Score Calculation
+    let calculatedScore = 100;
+    if (totalCount > 0) {
+      const deductions = (criticalCount * 20) + (highCount * 12) + (mediumCount * 6) + (lowCount * 2);
+      const recovery = (approvedCount * 15) + (acceptedCount * 10);
+      calculatedScore = Math.min(100, Math.max(15, 100 - deductions + recovery));
+    }
+    const grade = calculatedScore >= 90 ? 'A' : calculatedScore >= 80 ? 'B' : calculatedScore >= 70 ? 'C' : calculatedScore >= 60 ? 'D' : 'F';
+
+    let complianceStatus = 'not_audited';
+    if (totalCount === 0 || unresolvedCount === 0) {
+      complianceStatus = 'compliant';
+    } else if (unresolvedCriticalCount > 0) {
+      complianceStatus = 'non_compliant';
+    } else {
+      complianceStatus = 'partially_compliant';
+    }
+
+    const brandName = 'NovaTech Enterprise';
+    const guidelineName = 'NovaTech Enterprise Brand Compliance Guidelines v2.4';
+    const contentTitle = selectedAsset ? selectedAsset.title : (totalCount > 0 ? `Enterprise Marketing Creative Suite (${totalCount} Assets)` : 'Omnichannel Enterprise Marketing Assets');
+    const contentType = selectedAsset && selectedAsset.type ? selectedAsset.type.toUpperCase() : 'Omnichannel (Web, Social, Ads, PR)';
+
+    // Provenance Ledger from Local Storage
+    let provenanceHash = 'UNSEALED_PENDING_RELEASE';
+    let provenanceState = 'Pending Release Gate Verification — Sealed upon final dispatch';
+    try {
+      const rawAssets = localStorage.getItem('niyamai_assets_v1');
+      if (rawAssets) {
+        const parsed = JSON.parse(rawAssets);
+        const matched = parsed.find(a => a.governanceHash);
+        if (matched && matched.governanceHash) {
+          provenanceHash = matched.governanceHash;
+          provenanceState = 'Cryptographically Sealed via Web Crypto API (SHA-256)';
+        }
+      }
+    } catch (e) {}
+
+    // Reviewer Notes & Signoff Status
+    const existingComment = liveRecords.find(r => r.approvalComment && r.approvalComment.trim())?.approvalComment;
+    const reviewerNotes = existingComment || 'No formal reviewer comment submitted yet. Review pending Tier-2 verification.';
+    const reviewerRole = 'Authorized Content Compliance Officer (Tier-2)';
+    let signoffStatus = 'Pending Verification (0 Approved)';
+    if (approvedCount === totalCount && totalCount > 0) {
+      signoffStatus = 'Fully Approved for Distribution';
+    } else if (approvedCount > 0) {
+      signoffStatus = `Partially Approved (${approvedCount}/${totalCount} records cleared)`;
+    }
+
+    // ============================================================
+    // PAGE 1: AUDIT COVER & EXECUTIVE SUMMARY (PORTRAIT)
+    // ============================================================
+
+    // 1. Top Brand Banner
+    doc.setFillColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.rect(0, 0, portraitWidth, 40, 'F');
+    doc.setFillColor(COLOR_GOLD[0], COLOR_GOLD[1], COLOR_GOLD[2]);
+    doc.rect(0, 39.5, portraitWidth, 1, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text('NiyamAI', margin, 16);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(232, 222, 216);
+    doc.text('नि यम: Rule · Discipline · Order', margin, 22);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(244, 232, 236);
+    doc.text('ENTERPRISE BRAND COMPLIANCE & AI AUDIT ENGINE', margin, 28);
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('CONFIDENTIAL AUDIT REPORT', portraitWidth - margin, 15, { align: 'right' });
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_GOLD[0], COLOR_GOLD[1], COLOR_GOLD[2]);
+    doc.text(`ID: ${reportId}`, portraitWidth - margin, 21, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(232, 222, 216);
+    doc.text(`Compiled: ${generatedAt}`, portraitWidth - margin, 27, { align: 'right' });
+    doc.text(`Audit Date: ${auditDate}`, portraitWidth - margin, 32, { align: 'right' });
+
+    // 2. Report Document Title
+    let currentY = 48;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('BRAND COMPLIANCE AUDIT REPORT', margin, currentY);
+
+    currentY += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Comprehensive governance review of marketing copy, regulatory disclosures & visual standards', margin, currentY);
+
+    // 3. Clean, Non-Colliding 2-Column Metadata Grid
+    currentY += 6;
+    const metaBoxHeight = 36;
+    doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+    doc.roundedRect(margin, currentY, contentWidth, metaBoxHeight, 2, 2, 'FD');
+
+    const col1LabelX = margin + 4;
+    const col1ValX = margin + 32;
+    const col2LabelX = margin + (contentWidth / 2) + 2;
+    const col2ValX = margin + (contentWidth / 2) + 30;
+    const maxValWidth = (contentWidth / 2) - 34;
+
+    let rY = currentY + 6;
+
+    // Row 1
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Audited Scope:', col1LabelX, rY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    const splitTitle = doc.splitTextToSize(contentTitle, maxValWidth);
+    doc.text(splitTitle[0] || contentTitle, col1ValX, rY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Brand Entity:', col2LabelX, rY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(brandName, col2ValX, rY);
+
+    // Row 2
+    rY += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Brand Policy:', col1LabelX, rY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    const splitGuide = doc.splitTextToSize(guidelineName, maxValWidth);
+    doc.text(splitGuide[0] || guidelineName, col1ValX, rY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Scope Channel:', col2LabelX, rY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(contentType, col2ValX, rY);
+
+    // Row 3
+    rY += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Audit Date:', col1LabelX, rY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(auditDate, col1ValX, rY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Generated On:', col2LabelX, rY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(generatedAt, col2ValX, rY);
+
+    // Row 4
+    rY += 7;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Lead Reviewer:', col1LabelX, rY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(reviewerRole, col1ValX, rY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    doc.text('Sign-off State:', col2LabelX, rY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(approvedCount > 0 ? COLOR_EMERALD[0] : COLOR_AMBER[0], approvedCount > 0 ? COLOR_EMERALD[1] : COLOR_AMBER[1], approvedCount > 0 ? COLOR_EMERALD[2] : COLOR_AMBER[2]);
+    doc.text(signoffStatus, col2ValX, rY);
+
+    // 4. Compliance Verdict Banner
+    currentY += metaBoxHeight + 5;
+    const statusColor = complianceStatus === 'compliant' ? COLOR_EMERALD : complianceStatus === 'partially_compliant' ? COLOR_AMBER : COLOR_ROSE;
+    const statusBg = complianceStatus === 'compliant' ? [240, 253, 244] : complianceStatus === 'partially_compliant' ? [254, 252, 232] : [254, 242, 242];
+
+    const scoreBannerHeight = 28;
+    doc.setFillColor(statusBg[0], statusBg[1], statusBg[2]);
+    doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.roundedRect(margin, currentY, contentWidth, scoreBannerHeight, 2, 2, 'FD');
+
+    doc.setFillColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.roundedRect(margin + 3, currentY + 3, 34, 22, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text(`${calculatedScore}%`, margin + 20, currentY + 13, { align: 'center' });
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_GOLD[0], COLOR_GOLD[1], COLOR_GOLD[2]);
+    doc.text(`GRADE ${grade}`, margin + 20, currentY + 19, { align: 'center' });
+
+    const statusLabel = complianceStatus === 'compliant' ? 'PASSED — FULLY COMPLIANT' : complianceStatus === 'partially_compliant' ? 'ACTION REQUIRED — PARTIALLY COMPLIANT' : 'RELEASE BLOCKED — NON-COMPLIANT';
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.text(statusLabel, margin + 42, currentY + 10);
+
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const statusDesc = complianceStatus === 'compliant'
+      ? 'All audited copy conforms to established brand guidelines, factual claims, and regulatory standards.'
+      : complianceStatus === 'partially_compliant'
+      ? `${unresolvedCount} finding(s) remain pending review. Non-critical terminology issues detected.`
+      : `${unresolvedCriticalCount} unresolved critical violation(s) flagged (unsubstantiated guarantees or SLA conflicts).`;
+    doc.text(doc.splitTextToSize(statusDesc, contentWidth - 46), margin + 42, currentY + 17);
+
+    // 5. Governance Overview KPI Cards (4 cards)
+    currentY += scoreBannerHeight + 6;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text('AUDIT FINDINGS & GOVERNANCE OVERVIEW', margin, currentY);
+
+    currentY += 4;
+    const cardGap = 3;
+    const cardWidth = (contentWidth - (cardGap * 3)) / 4;
+    const cardHeight = 20;
+
+    const metricCards = [
+      { title: 'TOTAL FINDINGS', value: `${totalCount}`, note: 'Detected Issues', color: COLOR_BURGUNDY },
+      { title: 'CRITICAL RISKS', value: `${criticalCount}`, note: `${unresolvedCriticalCount} Unresolved`, color: criticalCount > 0 ? COLOR_ROSE : COLOR_EMERALD },
+      { title: 'HIGH SEVERITY', value: `${highCount}`, note: `${unresolvedHighCount} Unresolved`, color: highCount > 0 ? COLOR_AMBER : COLOR_EMERALD },
+      { title: 'REMEDIATION', value: `${resolvedCount} / ${totalCount}`, note: `${approvedCount} Formally Approved`, color: COLOR_EMERALD }
+    ];
+
+    metricCards.forEach((c, i) => {
+      const cardX = margin + (i * (cardWidth + cardGap));
+      doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.roundedRect(cardX, currentY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(c.title, cardX + 3, currentY + 5);
+
+      doc.setFontSize(11);
+      doc.setTextColor(c.color[0], c.color[1], c.color[2]);
+      doc.text(c.value, cardX + 3, currentY + 12);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(c.note, cardX + 3, currentY + 17);
+    });
+
+    // 6. Executive Narrative Summary Box
+    currentY += cardHeight + 6;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text('EXECUTIVE AUDIT SUMMARY', margin, currentY);
+
+    currentY += 4;
+    const execBoxHeight = 28;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+    doc.roundedRect(margin, currentY, contentWidth, execBoxHeight, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    const execNarrative = `This executive audit report evaluates brand alignment, legal claim veracity, and channel tone across ${totalCount} compliance review items. The analysis identified ${criticalCount} critical and ${highCount} high severity violations. As of this report, ${approvedCount} assets are approved, ${pendingCount} are pending review, and ${unresolvedCount} require human verification.`;
+    const splitSummary = doc.splitTextToSize(execNarrative, contentWidth - 8);
+    doc.text(splitSummary, margin + 4, currentY + 6);
+
+    // 7. Distinct Severity Distribution Badges
+    currentY += execBoxHeight + 6;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text('SEVERITY DISTRIBUTION & QUALITY GATES', margin, currentY);
+
+    currentY += 4;
+    const pillWidth = (contentWidth - 8) / 5;
+    const pillHeight = 16;
+    const severityItems = [
+      { label: 'CRITICAL', count: `${criticalCount}`, note: `${unresolvedCriticalCount} Open`, color: COLOR_ROSE, bg: [254, 242, 242] },
+      { label: 'HIGH', count: `${highCount}`, note: `${unresolvedHighCount} Open`, color: COLOR_AMBER, bg: [255, 247, 237] },
+      { label: 'MEDIUM', count: `${mediumCount}`, note: 'Brand Tone', color: COLOR_YELLOW, bg: [254, 252, 232] },
+      { label: 'LOW', count: `${lowCount}`, note: 'Minor Note', color: COLOR_STONE, bg: [243, 244, 246] },
+      { label: 'VERIFIED', count: '3 Checks', note: 'SLA & Privacy', color: COLOR_EMERALD, bg: [240, 253, 244] }
+    ];
+
+    severityItems.forEach((item, idx) => {
+      const pX = margin + (idx * (pillWidth + 2));
+      doc.setFillColor(item.bg[0], item.bg[1], item.bg[2]);
+      doc.setDrawColor(item.color[0], item.color[1], item.color[2]);
+      doc.roundedRect(pX, currentY, pillWidth, pillHeight, 1.5, 1.5, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
+      doc.text(item.label, pX + 3, currentY + 4.5);
+
+      doc.setFontSize(10);
+      doc.text(item.count, pX + 3, currentY + 10.5);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(item.note, pX + 3, currentY + 14);
+    });
+
+    // ============================================================
+    // PAGE 2: DETAILED FINDINGS TABLE (LANDSCAPE ORIENTATION)
+    // ============================================================
+    doc.addPage('a4', 'landscape');
+    const landscapeWidth = 297;
+    const tableContentWidth = landscapeWidth - (margin * 2); // 269mm
+
+    drawPageHeaderMini(doc, 'SECTION 02: DETAILED COMPLIANCE FINDINGS & REMEDIATION MATRIX', reportId);
+
+    if (totalCount === 0) {
+      doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+      doc.setDrawColor(COLOR_EMERALD[0], COLOR_EMERALD[1], COLOR_EMERALD[2]);
+      doc.roundedRect(margin, 35, tableContentWidth, 65, 3, 3, 'FD');
+
+      doc.setTextColor(COLOR_EMERALD[0], COLOR_EMERALD[1], COLOR_EMERALD[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('ZERO COMPLIANCE VIOLATIONS DETECTED', landscapeWidth / 2, 55, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+      doc.text('All audited content strictly conforms to enterprise brand guidelines, legal warranties, and channel standards.', landscapeWidth / 2, 65, { align: 'center' });
+      doc.text('No remediation required. Content is certified for release gate dispatch.', landscapeWidth / 2, 72, { align: 'center' });
+
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+      doc.text('Audit Status: 100% Passed · Verified Clean Matrix', landscapeWidth / 2, 85, { align: 'center' });
+    } else {
+      const tableBody = liveRecords.map((r, i) => [
+        `#${i + 1}`,
+        r.detectedIssue || 'Brand Issue',
+        `"${r.originalContent || ''}"`,
+        (r.severity || 'medium').toUpperCase(),
+        r.guidelineRef ? `${r.guidelineRef.title}${r.guidelineRef.section ? ` (§${r.guidelineRef.section})` : ''}` : 'Brand Policy',
+        `"${r.aiSuggestion ? r.aiSuggestion.suggestedText : ''}"`,
+        r.status === 'approved' ? 'Approved for Release' : r.status === 'pending-approval' ? 'Pending Human Approval' : r.status === 'correction-accepted' ? 'Correction Accepted' : 'Draft / Unreviewed'
+      ]);
+
+      if (doc.autoTable) {
+        doc.autoTable({
+          startY: 22,
+          margin: { left: margin, right: margin, top: 22, bottom: 18 },
+          head: [['#', 'Violation / Issue', 'Affected Content Draft', 'Severity', 'Brand Rule / Policy Standard', 'Suggested Remediation', 'Resolution Status']],
+          body: tableBody,
+          theme: 'grid',
+          styles: {
+            fontSize: 7.5,
+            cellPadding: 3,
+            textColor: COLOR_TEXT_DARK,
+            lineColor: [225, 215, 210],
+            lineWidth: 0.15,
+            overflow: 'linebreak',
+            valign: 'middle'
+          },
+          headStyles: {
+            fillColor: COLOR_BURGUNDY,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8,
+            halign: 'left',
+            valign: 'middle'
+          },
+          alternateRowStyles: {
+            fillColor: [253, 251, 249]
+          },
+          columnStyles: {
+            0: { cellWidth: 10, halign: 'center', fontStyle: 'bold' },
+            1: { cellWidth: 44, fontStyle: 'bold' },
+            2: { cellWidth: 52 },
+            3: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+            4: { cellWidth: 38 },
+            5: { cellWidth: 66 },
+            6: { cellWidth: 37, fontStyle: 'bold' }
+          },
+          didParseCell: (hookData) => {
+            if (hookData.section === 'body') {
+              if (hookData.column.index === 3) {
+                const sev = hookData.cell.raw;
+                if (sev === 'CRITICAL') {
+                  hookData.cell.styles.textColor = COLOR_ROSE;
+                  hookData.cell.styles.fillColor = [254, 242, 242];
+                } else if (sev === 'HIGH') {
+                  hookData.cell.styles.textColor = COLOR_AMBER;
+                  hookData.cell.styles.fillColor = [255, 247, 237];
+                } else if (sev === 'MEDIUM') {
+                  hookData.cell.styles.textColor = COLOR_YELLOW;
+                  hookData.cell.styles.fillColor = [254, 252, 232];
+                } else {
+                  hookData.cell.styles.textColor = COLOR_STONE;
+                  hookData.cell.styles.fillColor = [243, 244, 246];
+                }
+              }
+              if (hookData.column.index === 6) {
+                const st = hookData.cell.raw;
+                if (st === 'Approved for Release') {
+                  hookData.cell.styles.textColor = COLOR_EMERALD;
+                } else if (st === 'Pending Human Approval') {
+                  hookData.cell.styles.textColor = COLOR_AMBER;
+                }
+              }
+            }
+          },
+          showHead: 'everyPage',
+          rowPageBreak: 'avoid'
+        });
+      }
+    }
+
+    // ============================================================
+    // PAGE 3: GOVERNANCE, REMEDIATION & FINAL VERDICT (PORTRAIT)
+    // ============================================================
+    doc.addPage('a4', 'portrait');
+    drawPageHeaderMini(doc, 'SECTION 03: GOVERNANCE SIGN-OFF, REMEDIATION & VERDICT', reportId);
+
+    let finalY = 22;
+
+    // 1. Balanced Grid of 6 Correction Breakdown Cards
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('CORRECTION & HUMAN REVIEW BREAKDOWN', margin, finalY);
+
+    finalY += 4;
+    const breakColWidth = (contentWidth - 6) / 3;
+    const breakCardHeight = 15;
+
+    const reviewGrid = [
+      { label: 'AI SUGGESTED REMEDIATIONS', val: `${totalCount}`, note: 'Total audit findings', color: COLOR_BURGUNDY },
+      { label: 'DIRECTLY ACCEPTED', val: `${acceptedCount}`, note: 'Remediated as suggested', color: COLOR_EMERALD },
+      { label: 'MANUALLY REFINED', val: `${editedCount}`, note: 'Custom human edits', color: [29, 78, 216] },
+      { label: 'REJECTED / DISPUTED', val: `${rejectedCount}`, note: 'Declined changes', color: COLOR_STONE },
+      { label: 'PENDING TIER-2 REVIEW', val: `${pendingCount}`, note: 'Awaiting officer sign-off', color: COLOR_AMBER },
+      { label: 'FORMALLY APPROVED', val: `${approvedCount}`, note: 'Cleared for release', color: COLOR_EMERALD }
+    ];
+
+    reviewGrid.forEach((card, i) => {
+      const rx = margin + (i % 3) * (breakColWidth + 3);
+      const ry = finalY + Math.floor(i / 3) * (breakCardHeight + 3);
+
+      doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.roundedRect(rx, ry, breakColWidth, breakCardHeight, 1.5, 1.5, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(card.label, rx + 3, ry + 4.5);
+
+      doc.setFontSize(10.5);
+      doc.setTextColor(card.color[0], card.color[1], card.color[2]);
+      doc.text(card.val, rx + 3, ry + 10.5);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(card.note, rx + 16, ry + 10.5);
+    });
+
+    // 2. Auditor Comments & Sign-off Block
+    finalY += (breakCardHeight * 2) + 10;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('AUDITOR REVIEW & COMPLIANCE SIGN-OFF', margin, finalY);
+
+    finalY += 4;
+    const commentBoxHeight = 26;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+    doc.roundedRect(margin, finalY, contentWidth, commentBoxHeight, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text('Reviewer Sign-off Notes:', margin + 4, finalY + 5.5);
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    const splitNotes = doc.splitTextToSize(`"${reviewerNotes}"`, contentWidth - 8);
+    doc.text(splitNotes, margin + 4, finalY + 11);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.text(`Lead Officer: ${reviewerRole}  ·  Status: ${signoffStatus}  ·  Verified: ${generatedAt}`, margin + 4, finalY + 21);
+
+    // 3. Cryptographic Verification & Provenance Ledger
+    finalY += commentBoxHeight + 6;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('RELEASE GATE PROVENANCE & CRYPTOGRAPHIC LEDGER', margin, finalY);
+
+    finalY += 4;
+    const cryptoBoxHeight = 24;
+    doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+    doc.roundedRect(margin, finalY, contentWidth, cryptoBoxHeight, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text('SHA-256 Ledger Provenance Seal:', margin + 4, finalY + 5.5);
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+    const splitHash = doc.splitTextToSize(provenanceHash, contentWidth - 8);
+    doc.text(splitHash, margin + 4, finalY + 11);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    doc.text(`Ledger Verification: ${provenanceState}  (Web Crypto API Standard)`, margin + 4, finalY + 19);
+
+    // 4. Recommended Next Actions
+    finalY += cryptoBoxHeight + 6;
+    doc.setTextColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('RECOMMENDED NEXT ACTIONS', margin, finalY);
+
+    finalY += 4;
+    const recommendedActions = [];
+    if (unresolvedCriticalCount > 0) {
+      recommendedActions.push(`Immediately remediate ${unresolvedCriticalCount} critical violation(s) addressing unverified performance claims or SLA guarantees.`);
+    }
+    if (pendingCount > 0) {
+      recommendedActions.push(`Submit ${pendingCount} pending record(s) to Tier-2 certified Compliance Officer for formal sign-off.`);
+    }
+    if (unresolvedHighCount > 0) {
+      recommendedActions.push(`Align ${unresolvedHighCount} high-severity vocabulary finding(s) with approved enterprise terminology.`);
+    }
+    if (approvedCount === totalCount && totalCount > 0) {
+      recommendedActions.push('All audit items have cleared compliance gates. Content is certified for release dispatch.');
+    } else if (totalCount === 0) {
+      recommendedActions.push('Zero compliance issues detected. Content meets all enterprise brand guidelines.');
+    } else {
+      recommendedActions.push('Review unresolved findings in the Correction Workspace before initiating public dispatch.');
+    }
+
+    recommendedActions.slice(0, 3).forEach((act, idx) => {
+      doc.setFillColor(COLOR_CREAM_BG[0], COLOR_CREAM_BG[1], COLOR_CREAM_BG[2]);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.roundedRect(margin, finalY, contentWidth, 11, 1, 1, 'FD');
+
+      doc.setFillColor(COLOR_BURGUNDY[0], COLOR_BURGUNDY[1], COLOR_BURGUNDY[2]);
+      doc.roundedRect(margin + 2.5, finalY + 2.5, 6, 6, 0.8, 0.8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text(`${idx + 1}`, margin + 5.5, finalY + 6.8, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+      const splitAct = doc.splitTextToSize(act, contentWidth - 16);
+      doc.text(splitAct[0] || act, margin + 12, finalY + 7);
+
+      finalY += 13;
+    });
+
+    // 5. Final Audit Conclusion & Release Verdict Banner
+    finalY += 2;
+    const verdictHeight = 36;
+    doc.setFillColor(statusBg[0], statusBg[1], statusBg[2]);
+    doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.roundedRect(margin, finalY, contentWidth, verdictHeight, 2, 2, 'FD');
+
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.text('FINAL AUDIT CONCLUSION & RELEASE VERDICT', margin + 4, finalY + 7.5);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+    const subVerdict = complianceStatus === 'compliant'
+      ? 'RELEASE CLEARED — FULLY AUTHORIZED FOR OMNICHANNEL DISTRIBUTION'
+      : complianceStatus === 'partially_compliant'
+      ? 'CONDITIONAL CLEARANCE — REMAINING APPROVALS PENDING'
+      : 'RELEASE BLOCKED — CRITICAL COMPLIANCE REMEDIATIONS REQUIRED';
+    doc.text(subVerdict, margin + 4, finalY + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(COLOR_TEXT_DARK[0], COLOR_TEXT_DARK[1], COLOR_TEXT_DARK[2]);
+    let finalConclusion = '';
+    if (complianceStatus === 'compliant') {
+      finalConclusion = `The audited creative assets have passed all enterprise brand governance checks with an overall score of ${calculatedScore}% (Grade ${grade}). All detected issues have been remediated or approved by certified reviewers. The material is authorized for external release.`;
+    } else if (complianceStatus === 'partially_compliant') {
+      finalConclusion = `The audited creative is partially compliant with an overall score of ${calculatedScore}% (Grade ${grade}). ${resolvedCount} of ${totalCount} findings have been remediated. However, ${unresolvedCount} item(s) remain pending review. Full distribution clearance is withheld until outstanding reviews are signed off.`;
+    } else {
+      finalConclusion = `The audited creative is non-compliant with an overall score of ${calculatedScore}% (Grade ${grade}). ${unresolvedCriticalCount} critical violation(s) remain unresolved that directly contradict brand standards and legal SLAs. Distribution is strictly blocked by the Pre-Publish Gatekeeper until remediation is verified.`;
+    }
+    const splitConc = doc.splitTextToSize(finalConclusion, contentWidth - 8);
+    doc.text(splitConc, margin + 4, finalY + 20);
+
+    // ============================================================
+    // RUNNING FOOTERS & ACCURATE PAGE NUMBERS (All Pages)
+    // ============================================================
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      const pWidth = doc.internal.pageSize.getWidth();
+      const pHeight = doc.internal.pageSize.getHeight();
+
+      doc.setDrawColor(230, 220, 215);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pHeight - 11, pWidth - margin, pHeight - 11);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
+      doc.text(
+        'NiyamAI Intelligent Brand Governance · Strictly Confidential · ISO 27001 & SOC-2 Verified',
+        margin,
+        pHeight - 6
+      );
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.text(
+        `Page ${p} of ${totalPages}`,
+        pWidth - margin,
+        pHeight - 6,
+        { align: 'right' }
+      );
+    }
+
+    const fileName = `NiyamAI_Audit_Report_${dateStamp}.pdf`;
+    doc.save(fileName);
+    showToast(`Summary report downloaded: ${fileName}`, 'success');
+  } catch (err) {
+    console.error('PDF generation error in member5:', err);
+    showToast('Failed to generate PDF. Please ensure jsPDF is loaded.', 'error');
   }
 }
 

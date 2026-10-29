@@ -517,6 +517,7 @@ export default function App() {
       {activeModule === 'publishing' && (
         <main className="w-full">
           <PublishingAnalytics
+            records={records}
             approvedRecords={approvedRecords}
             history={history}
             pushToast={pushToast}
