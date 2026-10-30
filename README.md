@@ -192,3 +192,35 @@ Developed collaboratively by the NiyamAI project team.
 
 ![NiyamAI Brand Kit](Screenshots/brandkit.png.png)
 
+
+
+## Improvements Delivered After Round 2
+
+Following Round 2, NiyamAI was enhanced with three major improvements to strengthen data persistence, brand guideline processing, and compliance reporting.
+
+### 1. Database Integration for Saving Audit Reports
+
+- Integrated Supabase PostgreSQL for persistent storage of audit reports and correction records.
+- Implemented Express REST API endpoints to create, retrieve, and update audit records.
+- Added correction history tracking to maintain records of changes and review activities.
+- Implemented automatic data loading when the application starts.
+- Added a Saved Audits section to access previously generated audit reports.
+
+### 2. PDF Brand Guidelines Upload and Search
+
+- Integrated `pdfjs-dist` for extracting text from uploaded PDF documents.
+- Added support for processing brand guidelines into structured rules.
+- Organized extracted information into approved claims, prohibited claims, required disclaimers, brand terminology, and tone guidelines.
+- Enabled users to inspect extracted document content and use the guidelines during content audits.
+- Integrated uploaded PDF rules into the audit process to identify brand compliance issues.
+
+### 3. Downloadable Audit Report with Compliance Summary
+
+- Added a comprehensive audit summary report to the Publishing and Analytics module.
+- Included compliance scores, detected violations, findings, and approval details.
+- Organized audit results into a structured report for easier review.
+- Added an option to download the report for documentation and sharing.
+
+### Overall Impact
+
+These improvements make NiyamAI more practical for brand compliance workflows by providing persistent audit records, easier access to brand guidelines, and downloadable compliance summaries.
