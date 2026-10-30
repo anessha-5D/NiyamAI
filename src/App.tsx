@@ -27,6 +27,9 @@ type WorkspaceSubTab = 'workspace' | 'history';
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<ActiveModuleTab>('dashboard');
+  // Tracks which Brand Kit tab to open (and whether to scroll to it) when navigating from another module
+  const [brandKitTargetTab, setBrandKitTargetTab] = useState<string | null>(null);
+  const [brandKitScrollToPdf, setBrandKitScrollToPdf] = useState(false);
   const [records, setRecords] = useState<CorrectionRecord[]>(() => loadRecords());
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [selectedId, setSelectedId] = useState<string | null>(records[0]?.id ?? null);
@@ -179,7 +182,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveModule('brand-kit')}
+            onClick={() => { setBrandKitTargetTab(null); setBrandKitScrollToPdf(false); setActiveModule('brand-kit'); }}
             className={`nav-link ${activeModule === 'brand-kit' ? 'active font-bold' : ''}`}
             title="Step 01: Brand Knowledge, Guidelines & Design Assets"
           >
@@ -359,6 +362,9 @@ export default function App() {
             showLocalTabs={true}
             onNavigateToAudit={() => setActiveModule('text-audit')}
             pushToast={pushToast}
+            initialTab={brandKitTargetTab ?? undefined}
+            scrollToPdfSection={brandKitScrollToPdf}
+            onScrollComplete={() => setBrandKitScrollToPdf(false)}
           />
         </main>
       )}
@@ -371,7 +377,11 @@ export default function App() {
               handleCreateCorrectionRecord(rec);
               setActiveModule('corrections');
             }}
-            onNavigateToPdfUpload={() => setActiveModule('brand-kit')}
+            onNavigateToPdfUpload={() => {
+              setBrandKitTargetTab('pdf-guidelines');
+              setBrandKitScrollToPdf(true);
+              setActiveModule('brand-kit');
+            }}
             pushToast={pushToast}
           />
         </main>

@@ -255,7 +255,7 @@ export default function PdfBrandUpload({ onNavigateToAudit, pushToast }: PdfBran
       </div>
 
       {/* Upload Drag & Drop Area */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-cream-300 shadow-sm space-y-5">
+      <div id="pdf-upload-card" className="bg-white rounded-3xl p-6 sm:p-8 border border-cream-300 shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-wine-950 font-display">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HeroBanner from './HeroBanner';
 import CompanyProfile from './CompanyProfile';
 import BrandGuidelines from './BrandGuidelines';
@@ -17,18 +17,24 @@ export default function BrandKit({
   showLocalTabs = true,
   onNavigateToAudit,
   pushToast,
+  initialTab,
+  scrollToPdfSection = false,
+  onScrollComplete,
 }) {
   const resolvedSection = activeSection !== undefined ? activeSection : activeTab;
   const resolvedOnChange = onSectionChange || setActiveTab;
 
   const validTabIds = ['profile', 'guidelines', 'pdf-guidelines', 'facts', 'terminology', 'assets'];
 
-  // Default to 'profile' (Company Profile) if section is unspecified, invalid, or 'all'
-  const initialSection = resolvedSection && validTabIds.includes(resolvedSection)
-    ? resolvedSection
-    : 'profile';
+  // Use initialTab (from cross-module navigation) if provided, else fall back to resolvedSection
+  const startingSection = initialTab && validTabIds.includes(initialTab)
+    ? initialTab
+    : (resolvedSection && validTabIds.includes(resolvedSection) ? resolvedSection : 'profile');
 
-  const [internalSection, setInternalSection] = useState(initialSection);
+  const [internalSection, setInternalSection] = useState(startingSection);
+
+  // Ref for the PDF Guidelines section wrapper (used for scroll-into-view)
+  const pdfSectionRef = useRef(null);
 
   useEffect(() => {
     if (resolvedSection) {
@@ -40,8 +46,34 @@ export default function BrandKit({
     }
   }, [resolvedSection]);
 
+  // When initialTab changes (cross-module navigation), switch to that tab
+  useEffect(() => {
+    if (initialTab && validTabIds.includes(initialTab)) {
+      setInternalSection(initialTab);
+    }
+  }, [initialTab]);
+
   const rawSection = resolvedOnChange && activeSection !== undefined ? activeSection : internalSection;
   const activeTabId = validTabIds.includes(rawSection) ? rawSection : 'profile';
+
+  // Scroll to PDF Guidelines section after it mounts, when scrollToPdfSection is true
+  useEffect(() => {
+    if (!scrollToPdfSection) return;
+    if (activeTabId !== 'pdf-guidelines') return;
+
+    // Use a short timeout to let the tab content fully render before scrolling
+    const timer = setTimeout(() => {
+      const target = document.getElementById('pdf-upload-card') || pdfSectionRef.current || document.getElementById('pdf-guidelines-section');
+      if (target) {
+        const navbarHeight = 64; // approximate sticky navbar height in px
+        const elementTop = target.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: Math.max(0, elementTop - navbarHeight - 16), behavior: 'smooth' });
+      }
+      if (onScrollComplete) onScrollComplete();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [scrollToPdfSection, activeTabId]);
 
   const handleSectionSelect = (sectionId) => {
     const targetSection = validTabIds.includes(sectionId) ? sectionId : 'profile';
@@ -103,7 +135,9 @@ export default function BrandKit({
           <BrandGuidelines onOpenPdfUpload={() => handleSectionSelect('pdf-guidelines')} />
         )}
         {activeTabId === 'pdf-guidelines' && (
-          <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
+          <div id="pdf-guidelines-section" ref={pdfSectionRef}>
+            <PdfBrandUpload onNavigateToAudit={onNavigateToAudit} pushToast={pushToast} />
+          </div>
         )}
         {activeTabId === 'facts' && <ApprovedFacts />}
         {activeTabId === 'terminology' && <Terminology />}
