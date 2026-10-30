@@ -1,0 +1,372 @@
+{
+  "info": {
+    "name": "NiyamAI API (Localhost)",
+    "_postman_id": "niyamai-localhost-collection-v1",
+    "description": "Pre-configured test collection for NiyamAI Localhost API endpoints (Audit Engine & Persistence)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "sampleAuditId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sampleCorrectionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Configuration",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "Get Brand Rules Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/config/rules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "config", "rules"]
+            }
+          }
+        },
+        {
+          "name": "Reload Config From Disk",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/config/reload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "config", "reload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Audit Engine",
+      "item": [
+        {
+          "name": "Run Content Audit (Clean Draft)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"NovaTech is an intelligent workflow orchestration platform designed for modern enterprise teams. We deliver 99.9% uptime SLA backed by service credits and are ISO 27001 certified. Explore our plans with a 14-day free trial.\",\n  \"channel\": \"blogs\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit"]
+            }
+          }
+        },
+        {
+          "name": "Run Content Audit (Contradictory / Vague Draft)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.auditId) {",
+                  "    pm.collectionVariables.set('sampleAuditId', json.auditId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Our brand is good and modern. Use any colors and fonts you like. Our tone can be formal or casual depending on the situation. We provide the best services and are number one in the market. Use different logos whenever needed. There are no strict rules for wording or design. Our target audience is everyone.\",\n  \"channel\": \"blogs\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit"]
+            }
+          }
+        },
+        {
+          "name": "Run Content Audit with Uploaded PDF Guidelines",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Our solution will crush the competition with guaranteed 100% uptime.\",\n  \"channel\": \"ads\",\n  \"uploadedDoc\": {\n    \"id\": \"doc-test-123\",\n    \"fileName\": \"Acme_Brand_Manual_2026.pdf\",\n    \"guidelines\": [\n      {\n        \"id\": \"PDF-PC-05\",\n        \"category\": \"prohibited_claims\",\n        \"title\": \"Prohibited phrase: crush the competition\",\n        \"ruleText\": \"Prohibited phrase: 'crush the competition'. Combative framing violates our positioning.\",\n        \"severity\": \"Strict\",\n        \"pageNumber\": 2,\n        \"prohibitedTerms\": [\"crush the competition\"],\n        \"suggestedReplacement\": \"accelerate your team's productivity\"\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit"]
+            }
+          }
+        },
+        {
+          "name": "Apply Single Correction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"NovaTech is cheap.\",\n  \"finding\": {\n    \"id\": \"f1\",\n    \"matchedText\": \"cheap\",\n    \"startIndex\": 12,\n    \"endIndex\": 17,\n    \"recommendedCorrection\": \"cost-effective\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/correction/apply-single",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "correction", "apply-single"]
+            }
+          }
+        },
+        {
+          "name": "Apply All Corrections",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"We are cheap and promise 100% bug-free software.\",\n  \"findings\": [\n    {\n      \"id\": \"f1\",\n      \"matchedText\": \"cheap\",\n      \"startIndex\": 7,\n      \"endIndex\": 12,\n      \"recommendedCorrection\": \"cost-effective\"\n    },\n    {\n      \"id\": \"f2\",\n      \"matchedText\": \"100% bug-free\",\n      \"startIndex\": 25,\n      \"endIndex\": 38,\n      \"recommendedCorrection\": \"rigorously tested\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/correction/apply-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "correction", "apply-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Saved Audits (Database)",
+      "item": [
+        {
+          "name": "Save Audit Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditId\": \"audit-test-demo-1\",\n  \"timestamp\": \"2026-10-30T10:00:00.000Z\",\n  \"inputText\": \"NovaTech delivers 99.9% uptime SLA.\",\n  \"channel\": \"blogs\",\n  \"brand\": {\n    \"name\": \"NovaTech\",\n    \"tone\": \"Professional and friendly\",\n    \"targetAudience\": \"Teams and businesses\"\n  },\n  \"engineMode\": \"deterministic-only\",\n  \"score\": {\n    \"overallScore\": 100,\n    \"grade\": \"A\",\n    \"status\": \"compliant\",\n    \"scoringFormula\": \"100 - SUM(deductions)\",\n    \"categoryScores\": {\n      \"terminology\": { \"category\": \"terminology\", \"label\": \"Brand Terminology\", \"score\": 100, \"status\": \"pass\", \"violationsCount\": 0, \"summary\": \"Clean\" },\n      \"factualAccuracy\": { \"category\": \"factualAccuracy\", \"label\": \"Factual Accuracy\", \"score\": 100, \"status\": \"pass\", \"violationsCount\": 0, \"summary\": \"Clean\" },\n      \"toneVoice\": { \"category\": \"toneVoice\", \"label\": \"Tone & Voice\", \"score\": 100, \"status\": \"pass\", \"violationsCount\": 0, \"summary\": \"Clean\" }\n    },\n    \"deductions\": [],\n    \"isDeterministicOnly\": true\n  },\n  \"findings\": [],\n  \"correctedText\": \"NovaTech delivers 99.9% uptime SLA.\",\n  \"passedChecks\": [\"All checks passed\"],\n  \"summary\": {\n    \"totalFindings\": 0,\n    \"criticalCount\": 0,\n    \"highCount\": 0,\n    \"mediumCount\": 0,\n    \"lowCount\": 0,\n    \"passedCount\": 1\n  },\n  \"executionTimeMs\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audits"]
+            }
+          }
+        },
+        {
+          "name": "Get All Saved Audits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audits"]
+            }
+          }
+        },
+        {
+          "name": "Get Audit By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audits/{{sampleAuditId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audits", "{{sampleAuditId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Correction Records & History",
+      "item": [
+        {
+          "name": "Create Correction Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.record && json.record.id) {",
+                  "    pm.collectionVariables.set('sampleCorrectionId', json.record.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentTitle\": \"Postman Demo Campaign\",\n  \"contentType\": \"ad-copy\",\n  \"originalContent\": \"Our product is cheap and reliable.\",\n  \"detectedIssue\": \"Prohibited term: cheap\",\n  \"issueExplanation\": \"Cheap degrades perceived enterprise value.\",\n  \"severity\": \"high\",\n  \"workingContent\": \"Our product is cost-effective and reliable.\",\n  \"status\": \"draft\",\n  \"aiSuggestion\": {\n    \"suggestedText\": \"Our product is cost-effective.\",\n    \"explanation\": \"Replaces prohibited discount wording.\",\n    \"confidence\": 0.95,\n    \"generatedBy\": \"member2-audit\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections"]
+            }
+          }
+        },
+        {
+          "name": "Get All Correction Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections"]
+            }
+          }
+        },
+        {
+          "name": "Get Correction Record By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections/{{sampleCorrectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections", "{{sampleCorrectionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Correction Record Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"approvalComment\": \"Approved via Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections/{{sampleCorrectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections", "{{sampleCorrectionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Add History Entry to Correction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentTitle\": \"Postman Demo Campaign\",\n  \"originalContent\": \"Our product is cheap and reliable.\",\n  \"suggestedContent\": \"Our product is cost-effective.\",\n  \"finalContent\": \"Our product is cost-effective and reliable.\",\n  \"method\": \"accepted\",\n  \"status\": \"approved\",\n  \"note\": \"Accepted and approved via Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections/{{sampleCorrectionId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections", "{{sampleCorrectionId}}", "history"]
+            }
+          }
+        },
+        {
+          "name": "Get Record History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/corrections/{{sampleCorrectionId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "corrections", "{{sampleCorrectionId}}", "history"]
+            }
+          }
+        },
+        {
+          "name": "Get All Correction History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/correction-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "correction-history"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
