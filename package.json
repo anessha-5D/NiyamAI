@@ -21,7 +21,6 @@
     "vite": "^8.3.4"
   },
   "dependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.2.15",
     "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^1.61.0",
     "pdfjs-dist": "^6.4.299",
