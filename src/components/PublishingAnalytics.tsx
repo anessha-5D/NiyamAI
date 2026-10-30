@@ -1,15 +1,59 @@
-import React, { useEffect, useRef } from 'react';
-import { ExternalLink, ShieldCheck, RefreshCw, Download, Award } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ExternalLink, RefreshCw, Download } from 'lucide-react';
 import type { CorrectionRecord, HistoryEntry } from '../types';
+import type { AuditReport } from '../services/auditApi';
+import { buildReportDataFromRecords, generateAndDownloadReportPDF } from '../services/pdfReportGenerator';
 
 interface PublishingAnalyticsProps {
+  records?: CorrectionRecord[];
   approvedRecords?: CorrectionRecord[];
   history?: HistoryEntry[];
+  activeAuditReport?: AuditReport | null;
   pushToast?: (msg: string, type: 'info' | 'success' | 'warning' | 'error') => void;
 }
 
-export function PublishingAnalytics({ approvedRecords = [], history = [], pushToast }: PublishingAnalyticsProps) {
+export function PublishingAnalytics({
+  records = [],
+  approvedRecords = [],
+  history = [],
+  activeAuditReport,
+  pushToast
+}: PublishingAnalyticsProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Listen for scroll requests from embedded member5 iframe to align tabs directly below ribbon
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'SCROLL_TO_GOVERNANCE_ANALYTICS') {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
+
+        const ribbon = document.querySelector('.sticky.top-16') || document.querySelector('[class*="sticky top-16"]');
+        const ribbonBottom = ribbon ? ribbon.getBoundingClientRect().bottom : 124;
+
+        let tabsTopInParent = 0;
+        try {
+          const tabsElem = iframe.contentDocument?.getElementById('workspaceTabs');
+          if (tabsElem) {
+            const tabsRect = tabsElem.getBoundingClientRect();
+            const iframeRect = iframe.getBoundingClientRect();
+            tabsTopInParent = window.scrollY + iframeRect.top + tabsRect.top;
+          }
+        } catch (_) {}
+
+        if (!tabsTopInParent) {
+          tabsTopInParent = window.scrollY + iframe.getBoundingClientRect().top + 550;
+        }
+
+        const targetScrollY = tabsTopInParent - ribbonBottom + 8;
+        window.scrollTo({ top: Math.max(0, targetScrollY), behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Sync approved records from Member 4 into Member 5's localStorage
   useEffect(() => {
@@ -22,7 +66,9 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
 
       // Check if any approved record from Member 4 needs syncing into Member 5
       let updated = false;
-      approvedRecords.forEach((rec) => {
+      const targetRecords = approvedRecords.length > 0 ? approvedRecords : records;
+
+      targetRecords.forEach((rec) => {
         const assetId = `AST-${rec.id.replace('rec-', '')}`;
         const foundIdx = currentAssets.findIndex((a: any) => a.id === assetId);
 
@@ -34,17 +80,17 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
           date: new Date().toISOString().substring(0, 10),
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           wordCount: rec.workingContent.split(/\s+/).filter(Boolean).length,
-          overallScore: 97,
-          thresholdStatus: 'PASSED',
-          status: 'Ready to Publish',
+          overallScore: rec.status === 'approved' ? 98 : 88,
+          thresholdStatus: rec.status === 'approved' ? 'PASSED' : 'FLAGGED',
+          status: rec.status === 'approved' ? 'Ready to Publish' : 'Draft / In Review',
           approvals: {
-            current: 2,
+            current: rec.status === 'approved' ? 2 : 1,
             required: 2,
             signedBy: ['Authorized Compliance Officer', 'Executive Brand Director']
           },
           scores: {
             tone: 96,
-            claims: 98,
+            claims: rec.severity === 'critical' ? 78 : 98,
             accessibility: 95,
             visual: 98
           },
@@ -88,9 +134,9 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
               actor: 'Diya Waja',
               role: 'Legal & Regulatory Reviewer',
               time: '09:45 AM',
-              action: 'Human Approval Granted',
+              action: rec.status === 'approved' ? 'Human Approval Granted' : 'Pending Verification',
               detail: rec.approvalComment || 'Approved for public distribution after intent-preserving verification.',
-              status: 'approved'
+              status: rec.status === 'approved' ? 'approved' : 'pending'
             }
           ]
         };
@@ -114,12 +160,28 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
     } catch (err) {
       console.warn('LocalStorage sync issue:', err);
     }
-  }, [approvedRecords]);
+  }, [records, approvedRecords]);
 
   const handleReloadIframe = () => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
       iframeRef.current.contentWindow.location.reload();
       pushToast?.('Refreshed Publishing Gate & Analytics data.', 'info');
+    }
+  };
+
+  const handleDownloadSummaryReport = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const targetRecords = approvedRecords.length > 0 ? approvedRecords : records;
+      const reportData = buildReportDataFromRecords(targetRecords, history, activeAuditReport);
+      const filename = await generateAndDownloadReportPDF(reportData);
+      pushToast?.(`Summary report downloaded: ${filename}`, 'success');
+    } catch (err: any) {
+      console.error('[PublishingAnalytics] PDF download failed:', err);
+      pushToast?.(`Failed to download report: ${err.message || 'Unknown error'}`, 'error');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -148,10 +210,25 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Download Summary Report Button */}
+          <button
+            onClick={handleDownloadSummaryReport}
+            disabled={isDownloading}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-white text-plum-950 hover:bg-plum-50 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-60"
+            title="Download Brand Compliance Audit Report PDF"
+          >
+            {isDownloading ? (
+              <RefreshCw className="w-3.5 h-3.5 text-plum-950 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-plum-950" />
+            )}
+            <span>Download Summary Report</span>
+          </button>
+
           {/* Refresh Iframe */}
           <button
             onClick={handleReloadIframe}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#4E1227] hover:bg-[#691D37] text-white text-xs font-semibold border border-[#691D37] transition shadow-xs"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#4E1227] hover:bg-[#691D37] text-white text-xs font-semibold border border-[#691D37] transition shadow-xs cursor-pointer"
             title="Reload live governance state"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -176,7 +253,7 @@ export function PublishingAnalytics({ approvedRecords = [], history = [], pushTo
       <div className="w-full flex-1">
         <iframe
           ref={iframeRef}
-          src="/member5.html"
+          src="/member5.html?v=governance_drift_v4"
           title="NiyamAI Publishing Gatekeeper & Governance Analytics"
           className="w-full border-none"
           style={{

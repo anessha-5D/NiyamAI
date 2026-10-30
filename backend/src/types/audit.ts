@@ -21,7 +21,9 @@ export interface Finding {
   recommendedCorrection: string;
   confidence: number; // 0 - 100 estimated confidence
   ruleId: string;
-  source: 'deterministic' | 'gemini';
+  source: 'deterministic' | 'gemini' | 'pdf_guideline';
+  pageNumber?: number;
+  pdfSource?: string;
 }
 
 export interface CategoryScore {
@@ -64,6 +66,11 @@ export interface AuditSummary {
   passedCount: number;
 }
 
+export interface UploadedPdfSummary {
+  fileName: string;
+  totalRulesApplied: number;
+}
+
 export interface AuditReport {
   auditId: string;
   timestamp: string;
@@ -82,6 +89,7 @@ export interface AuditReport {
   passedChecks: string[];
   summary: AuditSummary;
   executionTimeMs: number;
+  uploadedPdfDoc?: UploadedPdfSummary;
 }
 
 export interface BrandFact {
@@ -121,6 +129,15 @@ export interface UnsupportedRule {
   explanation: string;
 }
 
+export interface ToneRuleConfig {
+  id: string;
+  pattern: string;
+  severity: FindingSeverity;
+  category?: FindingCategory;
+  explanation: string;
+  replacement: string;
+}
+
 export interface BrandProfileConfig {
   brand: {
     name: string;
@@ -140,5 +157,6 @@ export interface BrandProfileConfig {
   toneGuidelines: {
     voiceAttributes: string[];
     channelAdjustments: Record<string, string>;
+    toneRules?: ToneRuleConfig[];
   };
 }

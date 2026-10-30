@@ -717,59 +717,6 @@ export function resetTerminologyToDefault(): TerminologyStore {
   return getTerminology();
 }
 
-export interface TerminologyViolation {
-  term: string;
-  type: string;
-  replacement: string;
-  reason: string;
-  index: number;
-}
-
-export function checkTerminologyCompliance(text: string): {
-  passes: boolean;
-  violations: TerminologyViolation[];
-  scannedCount: number;
-} {
-  if (!text || !text.trim()) {
-    return { passes: true, violations: [], scannedCount: 0 };
-  }
-
-  const prohibited = getProhibitedTerms();
-  const violations: TerminologyViolation[] = [];
-  const lower = text.toLowerCase();
-
-  for (const item of prohibited) {
-    const termLower = item.term.toLowerCase();
-    let searchStart = 0;
-    while (searchStart < lower.length) {
-      const idx = lower.indexOf(termLower, searchStart);
-      if (idx === -1) break;
-
-      // Word boundary check
-      const before = idx === 0 ? ' ' : lower[idx - 1];
-      const after = idx + termLower.length >= lower.length ? ' ' : lower[idx + termLower.length];
-      const isWordBoundary = /[\s.,!?;:()"'`\-]/.test(before) && /[\s.,!?;:()"'`\-]/.test(after);
-
-      if (isWordBoundary) {
-        violations.push({
-          term: text.substring(idx, idx + termLower.length),
-          type: 'Prohibited Vocabulary',
-          replacement: item.replacementTerm,
-          reason: item.reason,
-          index: idx
-        });
-      }
-      searchStart = idx + termLower.length;
-    }
-  }
-
-  return {
-    passes: violations.length === 0,
-    violations,
-    scannedCount: prohibited.length
-  };
-}
-
 // ----------------- Brand Assets & Colors API -----------------
 
 export function getBrandAssets(): BrandAssetsData {

@@ -53,7 +53,7 @@ export default function HeroBanner({ onSelectSection }) {
             className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-wine-800/90 text-cream-100 border border-wine-700 font-semibold text-sm hover:bg-wine-700 transition-all active:scale-95"
           >
             <Compass className="w-4 h-4 text-pastel-sage" />
-            <span>Test Terminology</span>
+            <span>Explore Terminology</span>
           </button>
         </div>
 

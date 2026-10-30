@@ -93,31 +93,48 @@
     {
       "id": "PREF-001",
       "term": "cost-effective",
-      "alternatives": ["budget-rate", "low-priced", "cut-rate"],
+      "alternatives": [
+        "budget-rate",
+        "low-priced",
+        "cut-rate"
+      ],
       "explanation": "Use 'cost-effective' or 'high-ROI' to convey value without sounding discount-oriented."
     },
     {
       "id": "PREF-002",
       "term": "intelligent automation",
-      "alternatives": ["magic bot", "ai wizardry", "algorithmic magic"],
+      "alternatives": [
+        "magic bot",
+        "ai wizardry",
+        "algorithmic magic"
+      ],
       "explanation": "Emphasize intelligent automation and engineering rigor rather than 'magic'."
     },
     {
       "id": "PREF-003",
       "term": "workflow orchestration",
-      "alternatives": ["task juggling", "job shuffling"],
+      "alternatives": [
+        "task juggling",
+        "job shuffling"
+      ],
       "explanation": "Standard enterprise framing for multi-stage automated pipelines."
     },
     {
       "id": "PREF-004",
       "term": "explore our plans",
-      "alternatives": ["buy now before price jumps", "snag a deal"],
+      "alternatives": [
+        "buy now before price jumps",
+        "snag a deal"
+      ],
       "explanation": "Professional call to action for commercial engagements."
     },
     {
       "id": "PREF-005",
       "term": "enterprise-ready",
-      "alternatives": ["unbreakable", "bulletproof"],
+      "alternatives": [
+        "unbreakable",
+        "bulletproof"
+      ],
       "explanation": "Accurately communicates enterprise governance without indefensible claims."
     }
   ],
@@ -126,49 +143,87 @@
       "id": "FACT-001",
       "topic": "founding",
       "statement": "NovaTech was founded in 2021 by workflow automation specialists.",
-      "verifiableKeywords": ["founded", "2021", "established"]
+      "verifiableKeywords": [
+        "founded",
+        "2021",
+        "established"
+      ]
     },
     {
       "id": "FACT-002",
       "topic": "compliance_certifications",
       "statement": "NovaTech is certified for ISO 27001 and SOC 2 Type II data security standards.",
-      "verifiableKeywords": ["iso 27001", "soc 2", "soc 2 type ii", "security certification"]
+      "verifiableKeywords": [
+        "iso 27001",
+        "soc 2",
+        "soc 2 type ii",
+        "security certification"
+      ]
     },
     {
       "id": "FACT-003",
       "topic": "uptime_sla",
       "statement": "NovaTech provides a guaranteed 99.9% uptime SLA exclusively on Enterprise tiers, backed by service credits.",
-      "verifiableKeywords": ["99.9%", "uptime", "sla", "service level"]
+      "verifiableKeywords": [
+        "99.9%",
+        "uptime",
+        "sla",
+        "service level"
+      ]
     },
     {
       "id": "FACT-004",
       "topic": "trial_period",
       "statement": "NovaTech offers a 14-day free trial on all plans with no credit card required.",
-      "verifiableKeywords": ["14-day", "free trial", "no credit card"]
+      "verifiableKeywords": [
+        "14-day",
+        "free trial",
+        "no credit card"
+      ]
     },
     {
       "id": "FACT-005",
       "topic": "customer_scale",
       "statement": "NovaTech is actively deployed across more than 10,000 teams and businesses worldwide.",
-      "verifiableKeywords": ["10,000 teams", "10,000 businesses", "active teams"]
+      "verifiableKeywords": [
+        "10,000 teams",
+        "10,000 businesses",
+        "active teams"
+      ]
     },
     {
       "id": "FACT-006",
       "topic": "integrations",
       "statement": "NovaTech natively integrates with Slack, Microsoft Teams, Jira, Asana, and GitHub.",
-      "verifiableKeywords": ["slack", "microsoft teams", "jira", "asana", "github", "integrations"]
+      "verifiableKeywords": [
+        "slack",
+        "microsoft teams",
+        "jira",
+        "asana",
+        "github",
+        "integrations"
+      ]
     },
     {
       "id": "FACT-007",
       "topic": "customer_support",
       "statement": "24/7 dedicated priority support is included exclusively on Enterprise plans. Standard plans receive business-hours support.",
-      "verifiableKeywords": ["24/7 support", "priority support", "business-hours support"]
+      "verifiableKeywords": [
+        "24/7 support",
+        "priority support",
+        "business-hours support"
+      ]
     },
     {
       "id": "FACT-008",
       "topic": "data_encryption",
       "statement": "All customer data is encrypted in transit with TLS 1.3 and at rest with AES-256.",
-      "verifiableKeywords": ["tls 1.3", "aes-256", "encryption at rest", "encryption in transit"]
+      "verifiableKeywords": [
+        "tls 1.3",
+        "aes-256",
+        "encryption at rest",
+        "encryption in transit"
+      ]
     }
   ],
   "claimRules": {
@@ -202,9 +257,39 @@
         "contradicts": "FACT-004 (NovaTech is a commercial SaaS product with a 14-day trial, not freemium)",
         "severity": "high",
         "explanation": "NovaTech does not offer a permanent free tier. All tiers transition after the 14-day evaluation."
+      },
+      {
+        "pattern": "(?:there\\s+are\\s+)?no\\s+strict\\s+rules(?:\\s+for\\s+(?:wording\\s+or\\s+design|wording|design|content|branding))?|no\\s+rules\\s+for\\s+wording\\s+or\\s+design",
+        "contradicts": "FACT-GOVERN-001 (NovaTech mandates strict brand governance, wording, and design standards)",
+        "severity": "critical",
+        "explanation": "Direct contradiction of brand governance standards. Official wording and design guidelines are mandatory to ensure brand compliance and legal protection."
+      },
+      {
+        "pattern": "use\\s+any\\s+(?:colors?\\s+and\\s+fonts?|colors?|fonts?|typography|styles?)(?:\\s+you\\s+like)?|any\\s+colors?\\s+and\\s+fonts?",
+        "contradicts": "FACT-DESIGN-001 (NovaTech visual identity requires approved brand colors and typography)",
+        "severity": "high",
+        "explanation": "Contradicts NovaTech design standards. Marketing and product copy must adhere to official brand colors (Burgundy, Cream, Ink) and typography (Inter, Playfair Display)."
+      },
+      {
+        "pattern": "use\\s+different\\s+logos?(?:\\s+whenever\\s+needed)?|different\\s+logos?\\s+whenever\\s+needed",
+        "contradicts": "FACT-LOGO-001 (NovaTech logo marks must never be altered or substituted)",
+        "severity": "high",
+        "explanation": "Violates brand logo integrity guidelines. NovaTech brand marks must never be altered, substituted, or recolored ad-hoc."
+      },
+      {
+        "pattern": "(?:our\\s+)?target\\s+audience\\s+is\\s+everyone|audience\\s+is\\s+(?:everyone|anyone|everybody)|targeting\\s+everyone",
+        "contradicts": "FACT-AUDIENCE-001 (NovaTech target audience is strictly Teams and businesses)",
+        "severity": "high",
+        "explanation": "Contradicts official target audience ('Teams and businesses'). Defining target audience as 'everyone' dilutes enterprise positioning and market focus."
       }
     ],
     "unsupportedPatterns": [
+      {
+        "pattern": "(?:the\\s+)?best\\s+(?:services?|software|platform|tools?|solutions?|products?)|best\\s+in\\s+the\\s+market",
+        "type": "unsubstantiated_superlative",
+        "severity": "high",
+        "explanation": "Unsubstantiated superlative ('best services') requires third-party benchmark verification or official customer satisfaction audit data."
+      },
       {
         "pattern": "(?:#1|number\\s+one|world['']?s\\s+best|undisputed\\s+leader|best\\s+in\\s+the\\s+world)",
         "type": "unsubstantiated_superlative",
@@ -238,6 +323,32 @@
       "emails": "Personalized, courteous, structured for quick scanning, clear call to action",
       "blogs": "Authoritative, educational, thought-leadership depth with practical takeaways",
       "product_specs": "Precise, unambiguous technical language, explicit configuration bounds"
-    }
+    },
+    "toneRules": [
+      {
+        "id": "TONE-001",
+        "pattern": "(?:our\\s+)?tone\\s+can\\s+be\\s+formal\\s+or\\s+casual(?:\\s+depending\\s+on\\s+the\\s+situation)?|formal\\s+or\\s+casual(?:\\s+depending\\s+on\\s+the\\s+situation)?",
+        "severity": "high",
+        "category": "tone_mismatch",
+        "explanation": "Contradicts official brand voice policy. NovaTech's brand voice is consistently 'Professional and friendly' across all enterprise channels, never arbitrary or erratic.",
+        "replacement": "maintain our signature professional, friendly, and approachable tone"
+      },
+      {
+        "id": "TONE-002",
+        "pattern": "(?:our\\s+)?brand\\s+is\\s+good\\s+and\\s+modern|good\\s+and\\s+modern",
+        "severity": "medium",
+        "category": "tone_mismatch",
+        "explanation": "Vague, generic brand description ('good and modern') lacks positioning clarity, audience value proposition, or product identity.",
+        "replacement": "an intelligent workflow automation platform built for modern enterprise teams"
+      },
+      {
+        "id": "TONE-003",
+        "pattern": "whatever\\s+works|do\\s+whatever\\s+you\\s+want|anything\\s+goes",
+        "severity": "high",
+        "category": "tone_mismatch",
+        "explanation": "Careless or colloquial framing diminishes professional brand trust and governance.",
+        "replacement": "maintain consistent brand excellence and quality standards"
+      }
+    ]
   }
 }

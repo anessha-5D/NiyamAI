@@ -3,13 +3,14 @@
 // Fully Integrating Members 1, 2, 3, 4, and 5
 // ============================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import './App.css';
 import type { CorrectionRecord, HistoryEntry } from './types';
 import {
   loadRecords, saveRecords, updateRecord,
   loadHistory, saveHistory, addHistoryEntry,
 } from './utils/storage';
+import { getCorrectionRecords, getAllCorrectionHistory } from './services/databaseService';
 import { RecordList } from './components/RecordList';
 import { CorrectionDetail } from './components/CorrectionDetail';
 import { CorrectionHistory } from './components/CorrectionHistory';
@@ -33,6 +34,55 @@ export default function App() {
   const { toasts, push: pushToast, dismiss } = useToasts();
 
   const selectedRecord = useMemo(() => records.find(r => r.id === selectedId) ?? null, [records, selectedId]);
+
+  // Phase 1: Read-only database hydration for correction records and history
+  useEffect(() => {
+    let isMounted = true;
+
+    async function hydrateFromDatabase() {
+      try {
+        const [recordsResult, historyResult] = await Promise.allSettled([
+          getCorrectionRecords(),
+          getAllCorrectionHistory()
+        ]);
+
+        if (!isMounted) return;
+
+        // Hydrate records if backend returned a non-empty array
+        if (
+          recordsResult.status === 'fulfilled' &&
+          Array.isArray(recordsResult.value) &&
+          recordsResult.value.length > 0
+        ) {
+          setRecords(recordsResult.value);
+          saveRecords(recordsResult.value);
+          setSelectedId(prevId => {
+            const exists = recordsResult.value.some(r => r.id === prevId);
+            return exists ? prevId : (recordsResult.value[0]?.id ?? null);
+          });
+        }
+
+        // Hydrate history if backend returned a non-empty array
+        if (
+          historyResult.status === 'fulfilled' &&
+          Array.isArray(historyResult.value) &&
+          historyResult.value.length > 0
+        ) {
+          setHistory(historyResult.value);
+          saveHistory(historyResult.value);
+        }
+      } catch (err) {
+        // Silently retain existing local data if database request fails
+        console.warn('[App] Database hydration failed or offline:', err);
+      }
+    }
+
+    hydrateFromDatabase();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Counts for nav badges
   const pendingCount = records.filter(r => r.status === 'pending-approval').length;
@@ -307,6 +357,8 @@ export default function App() {
           <BrandKit
             showHero={true}
             showLocalTabs={true}
+            onNavigateToAudit={() => setActiveModule('text-audit')}
+            pushToast={pushToast}
           />
         </main>
       )}
@@ -319,6 +371,7 @@ export default function App() {
               handleCreateCorrectionRecord(rec);
               setActiveModule('corrections');
             }}
+            onNavigateToPdfUpload={() => setActiveModule('brand-kit')}
             pushToast={pushToast}
           />
         </main>
@@ -464,6 +517,7 @@ export default function App() {
       {activeModule === 'publishing' && (
         <main className="w-full">
           <PublishingAnalytics
+            records={records}
             approvedRecords={approvedRecords}
             history={history}
             pushToast={pushToast}
